@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.jaas.memory.InMemoryConfiguration;
@@ -39,11 +40,18 @@ public class websecurityconfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // /auth/** endpoints open hai kyuki yahi se register/login hota hai, aur yahi se JWT milta hai.
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**" ).permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/admin/register-admin",
+                                "/admin/register-faculty",
+                                "/admin/register-student",
+                                "/admin/update_department",
+                                "/admin/insert-course").permitAll()
                         // hasAnyRole internally ROLE_ prefix lagata hai.
                         // Example: hasAnyRole("ADMIN") => authority "ROLE_ADMIN" check hoti hai.
                         // NOTE: Yaha "STUDENT" / "FACULTY" strings role ke naam se match hone chahiye jo UserDetailsService set karta hai.
-                        .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENT")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENTS")
                         .requestMatchers("/faculty/**").hasAnyRole("ADMIN", "FACULTY")
                         .anyRequest().authenticated())
                 // JwtFilter ko UsernamePasswordAuthenticationFilter se pehle run kara rahe hai.

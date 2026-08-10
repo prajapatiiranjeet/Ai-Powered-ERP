@@ -31,7 +31,7 @@ public class JwtService {
             // signWith: token ko secret key se sign kar rahe hai taaki tampering detect ho sake.
             return Jwts.builder().subject(userDetails.getUsername())
                     .issuedAt(new Date())
-                    .expiration(new Date(System.currentTimeMillis() + 1000 * 60 *15))
+                    .expiration(new Date(System.currentTimeMillis() + 1000 * 60 *40))
                     .signWith(getKey())
                     .compact();
 

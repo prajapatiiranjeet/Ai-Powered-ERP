@@ -1,7 +1,7 @@
 package com.chaiorcode.mycode.DTO;
 
 
-import com.chaiorcode.mycode.Entity.Role;
+import com.chaiorcode.mycode.Enum.Role;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

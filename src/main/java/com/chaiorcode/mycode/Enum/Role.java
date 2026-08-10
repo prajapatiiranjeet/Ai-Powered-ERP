@@ -1,4 +1,4 @@
-package com.chaiorcode.mycode.Entity.Enum;
+package com.chaiorcode.mycode.Enum;
 
 public enum Role {
 

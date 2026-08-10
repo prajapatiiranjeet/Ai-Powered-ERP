@@ -1,5 +1,6 @@
 package com.chaiorcode.mycode.Service;
 
+import com.chaiorcode.mycode.Enum.Role;
 import com.chaiorcode.mycode.Entity.User;
 import com.chaiorcode.mycode.Repo.UserRepo;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,19 @@ public class CustomUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-                .roles(user.getRole().name())
+                .roles(normalizeRole(user.getRole()))
                 .build();
+    }
+
+    private String normalizeRole(Role role) {
+        if (role == null) {
+            return "USER";
+        }
+
+        if (role == Role.STUDENTS) {
+            return "STUDENT";
+        }
+
+        return role.name();
     }
 }
