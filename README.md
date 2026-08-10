@@ -8,7 +8,7 @@ The project is currently in development. Basic structure and backend flow are pr
 
 ## What is in the project so far
 
-- Spring Boot application with main class `com.chaiorcode.mycode.MycodeApplication`
+- Spring Boot application with main class `com.chaiorcode.mycode.MycodeApplication ( CHAI OR CODE WALE CHANNEL SE SPRING SECURITY SETUP KRAA THA ISLIYE USKO THODA DEDICATED KRR RHA HU KAHI SE COPY NHI KRAA) ` 
 - Spring Boot version: `4.1.0`
 - Java version: `21`
 - PostgreSQL as the target database
@@ -27,7 +27,7 @@ The project is currently in development. Basic structure and backend flow are pr
 ## Main endpoints implemented
 
 ### Authentication
-- `POST /auth/login`
+- `POST /auth/login   ( LOGIN SE PEHLE ADMIN  BANA LENA ISLIYE SECURITY FILTER ME MAINE ADMIN CONTROLLER KO PERMIT ALL KRAA HUA HAI USKE BAAD LOGIN TRY KRNA TABHI JWT TOKEN MILEGA )`
   - Accepts email/password in `LoginDTO`
   - Returns a JWT token in `LoginResponceDTO`
 
@@ -60,19 +60,19 @@ The project is currently in development. Basic structure and backend flow are pr
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
 spring.datasource.username=postgres
-spring.datasource.password=asdfghjkl
+spring.datasource.password=asdfghjkl (ye mera hai tum apna karna vrna chlega nhi fir mujhe bologe )
 ```
 
 4. Run the application with Maven:
 
 On Windows:
 ```powershell
-./mvnw.cmd spring-boot:run
+./mvnw.cmd spring-boot:run  ( MUJHE PATA HAI TU YEHI AYEGA)
 ```
 
 On macOS/Linux:
 ```bash
-./mvnw spring-boot:run
+./mvnw spring-boot:run ( SIR WO 100 RUPEE KI MADAD HOJATI TO )
 ```
 
 5. Use a REST client or frontend to call the authentication endpoint and send the JWT token in the `Authorization: Bearer <token>` header for protected endpoints.
