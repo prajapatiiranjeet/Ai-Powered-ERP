@@ -102,7 +102,7 @@ public class websecurityconfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         // AuthenticationManager Spring Security ka main entry point hai
         // username/password authentication ke liye.
         // Isko manually create nahi kar rahe, existing AuthenticationConfiguration se

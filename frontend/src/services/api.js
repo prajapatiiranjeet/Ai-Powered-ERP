@@ -15,8 +15,10 @@ function clearAuthAndRedirect() {
 
 export async function apiRequest(url, { method = 'GET', body, auth = true, headers = {} } = {}) {
   const reqHeaders = { ...headers };
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const isTextBody = typeof body === 'string' && reqHeaders['Content-Type'] === 'text/plain';
 
-  if (body !== undefined) {
+  if (body !== undefined && !isFormData && !reqHeaders['Content-Type']) {
     reqHeaders['Content-Type'] = 'application/json';
   }
 
@@ -29,7 +31,7 @@ export async function apiRequest(url, { method = 'GET', body, auth = true, heade
 
   const options = { method, headers: reqHeaders };
   if (body !== undefined) {
-    options.body = typeof body === 'string' ? body : JSON.stringify(body);
+    options.body = isFormData || isTextBody || typeof body === 'string' ? body : JSON.stringify(body);
   }
 
   let res;

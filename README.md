@@ -74,7 +74,7 @@ spring.datasource.password=YOUR_POSTGRES_PASSWORD
 | **Admin Command Center** | ![Admin Overview](db/Screenshot%202026-08-26%20184344.png) |
 | **Faculty Registration Modal** | ![Register Faculty Modal](db/Screenshot%202026-08-26%20184633.png) |
 | **Student Registration Modal** | ![Register Student Modal](db/Screenshot%202026-08-26%20184656.png) |
-| **SHERPAL AI Assistant** | ![SHERPAL AI](db/Screenshot%202026-08-26%20193620.png) |
+| **SHERPAL AI Assistant** | ![SHERPAL AI](db/Screenshot%202026-08-27%20051423.png) |
 | **RAG Knowledge Base Uploader** | ![Knowledge Base](db/Screenshot%202026-08-26%20193636.png) |
 
 ---

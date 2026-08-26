@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ragService } from '../../services/ragService.js';
 
 const roleLabels = { ADMIN: 'Admin', FACULTY: 'Faculty', STUDENT: 'Student' };
 
@@ -81,7 +82,7 @@ export default function RagChatbot({ role = 'STUDENT' }) {
     }
   }, [messages, open, minimized, isTyping]);
 
-  const handleSend = (textToSend) => {
+  const handleSend = async (textToSend) => {
     const queryText = (textToSend || question).trim();
     if (!queryText || isTyping) return;
 
@@ -99,19 +100,31 @@ export default function RagChatbot({ role = 'STUDENT' }) {
     setQuestion('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const answer = await ragService.ask(role, queryText);
       if (soundEnabled) playChimeSound('receive');
-      setIsTyping(false);
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           from: 'bot',
-          text: `Searching NIU knowledge base for **"${queryText}"**... I will provide verified campus information here.`,
+          text: typeof answer === 'string' ? answer : answer?.answer || 'SHERPAL returned an empty response.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
       ]);
-    }, 1100);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          from: 'bot',
+          text: `Sorry, SHERPAL could not answer right now. ${error?.message || 'Please try again.'}`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSubmit = (e) => {
