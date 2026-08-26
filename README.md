@@ -70,11 +70,12 @@ spring.datasource.password=YOUR_POSTGRES_PASSWORD
 
 | Page / Feature | Screenshot Preview |
 | :--- | :--- |
-| **Login Portal (Glass UI)** | ![Login Page](frontend/public/login_screenshot.png) |
-| **Admin Command Center** | ![Admin Overview](frontend/public/admin_dashboard_screenshot.png) |
-| **SHERPAL AI Assistant** | ![SHERPAL AI](frontend/public/sherpal_ai_screenshot.png) |
-| **Faculty Registration Modal** | ![Register Faculty Modal](frontend/public/register_faculty_screenshot.png) |
-| **RAG Knowledge Base Uploader** | ![Knowledge Base](frontend/public/knowledge_upload_screenshot.png) |
+| **Login Portal (Glass UI)** | ![Login Page](db/Screenshot%202026-08-26%20184328.png) |
+| **Admin Command Center** | ![Admin Overview](db/Screenshot%202026-08-26%20184344.png) |
+| **Faculty Registration Modal** | ![Register Faculty Modal](db/Screenshot%202026-08-26%20184633.png) |
+| **Student Registration Modal** | ![Register Student Modal](db/Screenshot%202026-08-26%20184656.png) |
+| **SHERPAL AI Assistant** | ![SHERPAL AI](db/Screenshot%202026-08-26%20193620.png) |
+| **RAG Knowledge Base Uploader** | ![Knowledge Base](db/Screenshot%202026-08-26%20193636.png) |
 
 ---
 
