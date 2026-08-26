@@ -1,6 +1,5 @@
 package com.chaiorcode.mycode.security;
 
-
 import jakarta.servlet.FilterChain;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +21,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @AllArgsConstructor
@@ -33,69 +37,62 @@ public class websecurityconfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                // JWT based APIs me generally session maintain nahi karte.
-                // Har request me token aata hai, filter usko validate karta hai aur SecurityContext me Authentication set karta hai.
-                // Isliye SessionCreationPolicy.STATELESS rakha hai.
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // /auth/** endpoints open hai kyuki yahi se register/login hota hai, aur yahi se JWT milta hai.
-                        .requestMatchers("/auth/**" ).permitAll()
-                        .requestMatchers(HttpMethod.POST,
-                                "/admin/register-admin",
-                                "/admin/register-faculty",
-                                "/admin/register-student",
-                                "/admin/update_department",
-                                "/admin/insert-course").permitAll()
-                        // hasAnyRole internally ROLE_ prefix lagata hai.
-                        // Example: hasAnyRole("ADMIN") => authority "ROLE_ADMIN" check hoti hai.
-                        // NOTE: Yaha "STUDENT" / "FACULTY" strings role ke naam se match hone chahiye jo UserDetailsService set karta hai.
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENTS")
                         .requestMatchers("/faculty/**").hasAnyRole("ADMIN", "FACULTY")
                         .anyRequest().authenticated())
-                // JwtFilter ko UsernamePasswordAuthenticationFilter se pehle run kara rahe hai.
-                // Reason: Hame request aate hi JWT parse karke SecurityContext set karna hai,
-                // taaki controller/service ke time pe current user/roles available ho.
-                .addFilterBefore(jwtFilter , UsernamePasswordAuthenticationFilter.class);
-
-//                .httpBasic(Customizer.withDefaults()); ise remove krdiya hai kyuki ab ham JWT tokens use krenge or Based authentication use nhi krenge
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//
-//        UserDetails student = User.builder()
-//                .username("student")
-//                .password(passwordEncoder().encode("student123"))
-//                .roles("STUDENT")
-//                .build();
-//
-//
-//        UserDetails faculty = User.builder()
-//                .username("faculty")
-//                .password(passwordEncoder().encode("faculty123"))
-//                .roles("FACULTY")
-//                .build();
-//
-//
-//        UserDetails admin = User.builder()
-//                .username("admin")
-//                .password(passwordEncoder().encode("admin123"))
-//                .roles("ADMIN")
-//                .build();
-//
-//
-//        return new InMemoryUserDetailsManager(
-//                student,
-//                faculty,
-//                admin
-//        );
-//    }    temperory users bnaye the roles ke sath
-
+    // @Bean
+    // public UserDetailsService userDetailsService() {
+    //
+    // UserDetails student = User.builder()
+    // .username("student")
+    // .password(passwordEncoder().encode("student123"))
+    // .roles("STUDENT")
+    // .build();
+    //
+    //
+    // UserDetails faculty = User.builder()
+    // .username("faculty")
+    // .password(passwordEncoder().encode("faculty123"))
+    // .roles("FACULTY")
+    // .build();
+    //
+    //
+    // UserDetails admin = User.builder()
+    // .username("admin")
+    // .password(passwordEncoder().encode("admin123"))
+    // .roles("ADMIN")
+    // .build();
+    //
+    //
+    // return new InMemoryUserDetailsManager(
+    // student,
+    // faculty,
+    // admin
+    // );
+    // } temperory users bnaye the roles ke sath
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -105,10 +102,12 @@ public class websecurityconfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration){
-                // AuthenticationManager Spring Security ka main entry point hai username/password authentication ke liye.
-                // Isko manually create nahi kar rahe, existing AuthenticationConfiguration se le rahe hai.
-                return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) {
+        // AuthenticationManager Spring Security ka main entry point hai
+        // username/password authentication ke liye.
+        // Isko manually create nahi kar rahe, existing AuthenticationConfiguration se
+        // le rahe hai.
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
 }

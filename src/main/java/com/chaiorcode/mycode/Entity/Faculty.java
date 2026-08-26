@@ -51,6 +51,14 @@ public class Faculty {
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private Course course;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private Branch branch;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Designation designation;

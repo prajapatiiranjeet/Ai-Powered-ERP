@@ -11,6 +11,7 @@
     import org.springframework.web.bind.annotation.*;
 
     import java.util.List;
+    import java.util.stream.Collectors;
 
 
     @RestController
@@ -21,7 +22,7 @@
         private final FacultyService facultyService;
         private  final AuthService authService;
         private final DepartmentService departmentService;
-        private CourseService courseService;
+        private final CourseService courseService;
         // NOTE:
         // Abhi yaha @RestController/@RequestMapping nahi hai, isliye runtime pe koi endpoints expose nahi hote.
         // Future me agar admin specific APIs add karni ho to is class ko RestController bana ke mappings add ki ja sakti hai.
@@ -68,6 +69,37 @@
         public List<String> getallStudent(){
             return studentService.Studentgetall();
         }
+
+        @GetMapping("/get-faculty-count")
+        public long getFacultyCount(){
+            return facultyService.countFaculty();
+        }
+
+        @GetMapping("/get-departments")
+        public List<DepartmentOptionDTO> getDepartments(){
+            return departmentService.getDepartments().stream()
+                    .map(department -> new DepartmentOptionDTO(department.getId(), department.getCode(), department.getName()))
+                    .collect(Collectors.toList());
+        }
+
+                @GetMapping("/get-courses")
+                public List<LookupOptionDTO> getCourses(@RequestParam Long departmentId){
+                    return courseService.getCourses(departmentId).stream()
+                        .map(course -> new LookupOptionDTO(course.getId(), course.getName()))
+                        .collect(Collectors.toList());
+                }
+
+                @GetMapping("/get-branches")
+                public List<LookupOptionDTO> getBranches(@RequestParam Long courseId){
+                    return courseService.getBranches(courseId).stream()
+                        .map(branch -> new LookupOptionDTO(branch.getId(), branch.getName()))
+                        .collect(Collectors.toList());
+                }
+
+            @GetMapping("/get-course-count")
+            public long getCourseCount(){
+                return courseService.countCourses();
+            }
 
         @DeleteMapping("/student-delete")
         public ResponseEntity<String> deleteStudent(@RequestBody StudentDTO studentDTO, Authentication authentication) {

@@ -7,11 +7,22 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class DepartmentService {
 
-    private DepartmentRepository departmentRepository;
+    private final DepartmentRepository departmentRepository;
+
+    @Autowired
+    public DepartmentService(DepartmentRepository departmentRepository) {
+        this.departmentRepository = departmentRepository;
+    }
+
+    public List<Department> getDepartments() {
+        return departmentRepository.findAll();
+    }
 
 
     public  String setdepartment(DepartmentDTO dto) {

@@ -143,11 +143,16 @@ public class AuthService {
 
         Department department = departmentRepository.findById(createUserDto.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Invalid departmentId"));
+        Course course = courseRepository.findById(createUserDto.getCourseId())
+            .orElseThrow(() -> new RuntimeException("Invalid courseId"));
+        Branch branch = branchRepo.findById(createUserDto.getBranchId())
+            .orElseThrow(() -> new RuntimeException("Invalid branchId"));
         User user = new User();
         user.setEmail(createUserDto.getEmail());
         user.setName(createUserDto.getName());
         user.setPassword(passwordEncoder.encode(createUserDto.getPassword()));
         user.setDepartment(department);
+        user.setCourse(course);
         user.setRole(Role.FACULTY);
         User saved = userRepo.save(user);
 
@@ -157,6 +162,8 @@ public class AuthService {
         faculty.setFirstName(saved.getName());
         faculty.setEmail(saved.getEmail());
         faculty.setDepartment(department);
+        faculty.setCourse(course);
+        faculty.setBranch(branch);
         faculty.setDesignation(createUserDto.getDesignation());
         faculty.setSpecialization("Not Provided");
         faculty.setJoiningDate(LocalDate.now());

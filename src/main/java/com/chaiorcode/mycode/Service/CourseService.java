@@ -6,10 +6,34 @@ import com.chaiorcode.mycode.Entity.Department;
 import com.chaiorcode.mycode.Repo.CourseRepository;
 import com.chaiorcode.mycode.Repo.DepartmentRepository;
 import org.jspecify.annotations.Nullable;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
+@Service
 public class CourseService {
-    private CourseRepository courseRepository;
-    private DepartmentRepository departmentRepository;
+
+    private final CourseRepository courseRepository;
+    private final DepartmentRepository departmentRepository;
+    private final BranchRepo branchRepo;
+
+    @Autowired
+    public CourseService(CourseRepository courseRepository, DepartmentRepository departmentRepository, BranchRepo branchRepo) {
+        this.courseRepository = courseRepository;
+        this.departmentRepository = departmentRepository;
+        this.branchRepo = branchRepo;
+    }
+
+    public List<Course> getCourses(Long departmentId) {
+        return courseRepository.findByDepartmentId(departmentId);
+    }
+
+    public List<Branch> getBranches(Long courseId) {
+        return branchRepo.findByCourseId(courseId);
+    }
+
+    public long countCourses() {
+        return courseRepository.count();
+    }
 
     public  String insertcourse(CoursDTO coursDTO) {
         Course course = new Course();
