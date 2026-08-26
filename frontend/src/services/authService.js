@@ -3,6 +3,7 @@ import { STORAGE_KEYS, ROLES } from '../utils/constants.js';
 import { decodeJwtPayload } from '../utils/jwt.js';
 import { adminService } from './adminService.js';
 import { studentService } from './studentService.js';
+import { facultyService } from './facultyService.js';
 
 export async function login(email, password) {
   const res = await apiRequest('/auth/login', {
@@ -11,16 +12,22 @@ export async function login(email, password) {
     body: { email, password }
   });
 
-  const { id, jwt } = res || {};
+  const { id, jwt, role: returnedRole, name, email: returnedEmail } = res || {};
   if (!jwt) throw new Error('Invalid login response');
 
   localStorage.setItem(STORAGE_KEYS.TOKEN, jwt);
   if (id) localStorage.setItem(STORAGE_KEYS.USER_ID, String(id));
+  if (returnedEmail || email) localStorage.setItem(STORAGE_KEYS.EMAIL, returnedEmail || email);
+  if (name) localStorage.setItem(STORAGE_KEYS.NAME, name);
 
-  const payload = decodeJwtPayload(jwt);
-  if (payload?.sub) localStorage.setItem(STORAGE_KEYS.EMAIL, payload.sub);
+  let role = returnedRole;
+  if (role === 'STUDENTS') role = 'STUDENT';
+  if (role) {
+    localStorage.setItem(STORAGE_KEYS.ROLE, role);
+  } else {
+    role = await detectRole();
+  }
 
-  const role = await detectRole();
   return { id, jwt, role };
 }
 
@@ -52,13 +59,21 @@ export async function detectRole() {
   try {
     const profile = await studentService.viewProfile();
     localStorage.setItem(STORAGE_KEYS.ROLE, ROLES.STUDENT);
-    if (profile?.name) localStorage.setItem(STORAGE_KEYS.NAME, profile.name);
+    const name = profile?.fullName || profile?.name;
+    if (name) localStorage.setItem(STORAGE_KEYS.NAME, name);
     return ROLES.STUDENT;
   } catch (_) {
     // not student
   }
 
-  localStorage.setItem(STORAGE_KEYS.ROLE, ROLES.FACULTY);
+  try {
+    const profile = await facultyService.viewProfile();
+    localStorage.setItem(STORAGE_KEYS.ROLE, ROLES.FACULTY);
+    const name = profile?.fullName || profile?.name;
+    if (name) localStorage.setItem(STORAGE_KEYS.NAME, name);
+  } catch (_) {
+    // ignore faculty profile fetch errors
+  }
   return ROLES.FACULTY;
 }
 
@@ -67,7 +82,12 @@ export async function refreshUserName() {
   try {
     if (role === ROLES.STUDENT) {
       const p = await studentService.viewProfile();
-      if (p?.name) localStorage.setItem(STORAGE_KEYS.NAME, p.name);
+      const name = p?.fullName || p?.name;
+      if (name) localStorage.setItem(STORAGE_KEYS.NAME, name);
+    } else if (role === ROLES.FACULTY) {
+      const p = await facultyService.viewProfile();
+      const name = p?.fullName || p?.name;
+      if (name) localStorage.setItem(STORAGE_KEYS.NAME, name);
     }
   } catch (_) { /* ignore */ }
 }

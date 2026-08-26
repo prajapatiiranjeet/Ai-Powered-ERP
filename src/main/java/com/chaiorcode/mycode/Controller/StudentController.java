@@ -2,6 +2,7 @@ package com.chaiorcode.mycode.Controller;
 
 import com.chaiorcode.mycode.DTO.CreateUserDto;
 import com.chaiorcode.mycode.DTO.StudentDTO;
+import com.chaiorcode.mycode.DTO.StudentProfileDTO;
 import com.chaiorcode.mycode.Entity.Student;
 import com.chaiorcode.mycode.Service.AuthService;
 import com.chaiorcode.mycode.Service.CustomUserDetailsService;
@@ -22,10 +23,6 @@ public class StudentController {
 
     private final StudentService studentService;
     private  final AuthService authService;
-    // NOTE:
-    // Abhi is controller me endpoints implement nahi kiye gaye.
-    // SecurityConfig me /students/** route ko ADMIN + STUDENT roles ke liye allowed rakha hai,
-    // so future me jab bhi yaha APIs add hongi, ye already role-based protected rahengi.
     @PutMapping("/update")
     public ResponseEntity<Student> updateStudent(@RequestBody StudentDTO studentDTO, Authentication authentication) {
 
@@ -41,10 +38,10 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.OK).body(authService.changepassword(createUserDto));
     }
 
-    @GetMapping("view-profile")
-    public ResponseEntity<?> viewprofile(Authentication authentication){
+    @GetMapping("/view-profile")
+    public ResponseEntity<StudentProfileDTO> viewprofile(Authentication authentication){
         String email = authentication.getName();
-        CreateUserDto studentDTO = studentService.viewprofilebyEmail(email);
-        return ResponseEntity.ok(studentDTO);
+        StudentProfileDTO dto = studentService.viewprofilebyEmail(email);
+        return ResponseEntity.ok(dto);
     }
 }

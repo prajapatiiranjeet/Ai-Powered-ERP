@@ -43,7 +43,7 @@ public class websecurityconfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENTS")
+                        .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENT", "STUDENTS")
                         .requestMatchers("/faculty/**").hasAnyRole("ADMIN", "FACULTY")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -2,6 +2,7 @@ package com.chaiorcode.mycode.Controller;
 
 
 import com.chaiorcode.mycode.DTO.CreateUserDto;
+import com.chaiorcode.mycode.DTO.FacultyProfileDTO;
 import com.chaiorcode.mycode.DTO.FacultyRequestDTO;
 import com.chaiorcode.mycode.Entity.Faculty;
 import com.chaiorcode.mycode.Service.AuthService;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +29,11 @@ public class FacultyController {
     // SecurityConfig me /faculty/** route ko ADMIN + FACULTY roles ke liye allowed rakha hai,
     // so future me jo bhi APIs yaha add hongi wo JWT + role checks se secure rahengi.
     private final FacultyService facultyService;
+
+    @GetMapping("/view-profile")
+    public ResponseEntity<FacultyProfileDTO> viewProfile(Authentication authentication) {
+        return ResponseEntity.ok(facultyService.viewProfile(authentication.getName()));
+    }
 
     @PutMapping("/faculty-update")
     public ResponseEntity<Faculty> updatefaculty(@RequestBody FacultyRequestDTO facultyDTO, Authentication authentication) {

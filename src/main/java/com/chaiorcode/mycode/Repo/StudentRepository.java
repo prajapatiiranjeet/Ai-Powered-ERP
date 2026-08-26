@@ -20,6 +20,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     boolean existsByRollNo(String rollNo);
 
+    Optional<Student> findByEmail(String email);
+
     Optional<Student> findByUserEmail(String email);
 
     @Query("select s.course.id from Student s where s.email = :email")

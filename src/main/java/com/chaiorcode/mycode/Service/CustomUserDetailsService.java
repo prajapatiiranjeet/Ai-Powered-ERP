@@ -38,8 +38,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             return "USER";
         }
 
-        if (role == Role.STUDENTS) {
-            return "STUDENT";
+        if (role == Role.STUDENT || role == Role.STUDENTS) {
+            return "STUDENTS";
         }
 
         return role.name();

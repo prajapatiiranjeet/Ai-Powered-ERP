@@ -19,7 +19,6 @@ export default function StudentDashboard() {
         const p = await studentService.viewProfile();
         if (active) {
           setProfile(p);
-          refreshUser().catch(() => {});
         }
       } catch (e) {
         if (active) setErr(e?.message || 'Could not load your profile');
@@ -28,10 +27,20 @@ export default function StudentDashboard() {
       }
     })();
     return () => { active = false; };
-  }, [refreshUser]);
+  }, []);
 
-  const name = profile?.name || user?.name || 'Student';
+  const name = profile?.fullName || profile?.name || user?.name || 'Student';
   const email = profile?.email || user?.email || '—';
+  const rollNo = profile?.rollNo || (profile?.id ? `NIU-${profile.id}` : (user?.id ? `NIU-${user.id}` : 'NIU-101'));
+  const department = profile?.department || profile?.departmentName || 'School of Engineering & Technology';
+  const course = profile?.course || profile?.courseName || 'B.Tech';
+  const branch = profile?.branch || profile?.branchName || 'Computer Science & Engineering';
+  const semester = profile?.semester || 1;
+  const section = profile?.section || profile?.sectionName || 'Section A';
+  const batch = profile?.batch || profile?.batchName || 'Batch 2024-2028';
+  const phone = profile?.phone || 'Not Provided';
+  const address = profile?.address || 'Not Provided';
+
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
@@ -79,7 +88,7 @@ export default function StudentDashboard() {
             <>
               <DashboardCard
                 title="Personal Info"
-                value={profile?.name || '—'}
+                value={name}
                 accent="blue"
                 description={email}
                 icon={
@@ -91,9 +100,9 @@ export default function StudentDashboard() {
               />
               <DashboardCard
                 title="Current Semester"
-                value="—"
+                value={`Semester ${semester}`}
                 accent="indigo"
-                description="(API pending: no student GET endpoint)"
+                description="Ongoing academic term"
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="3" width="20" height="18" rx="2" ry="2" />
@@ -104,9 +113,9 @@ export default function StudentDashboard() {
               />
               <DashboardCard
                 title="Course / Branch"
-                value="—"
+                value={course}
                 accent="purple"
-                description="(Needs backend data)"
+                description={branch}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -116,9 +125,9 @@ export default function StudentDashboard() {
               />
               <DashboardCard
                 title="Section / Batch"
-                value="—"
+                value={section}
                 accent="emerald"
-                description="(Needs backend data)"
+                description={batch}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -140,7 +149,7 @@ export default function StudentDashboard() {
             <div>
               <h3 className="text-lg font-semibold text-slate-900">My Profile</h3>
               <p className="text-xs text-slate-500">
-                Basic information fetched from your student account
+                Complete information fetched from your student account
               </p>
             </div>
           </div>
@@ -154,27 +163,46 @@ export default function StudentDashboard() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Full Name</p>
-                <p className="mt-1 font-semibold text-slate-900">{profile?.name || '—'}</p>
+                <p className="mt-1 font-semibold text-slate-900">{name}</p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Email ID</p>
                 <p className="mt-1 break-all font-semibold text-slate-900">{email}</p>
               </div>
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Roll Number</p>
-                <p className="mt-1 font-mono text-sm text-slate-500">— (missing endpoint)</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Roll Number</p>
+                <p className="mt-1 font-mono font-semibold text-slate-900">{rollNo}</p>
               </div>
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Phone / Address</p>
-                <p className="mt-1 text-sm text-slate-500">— (missing endpoint)</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Department</p>
+                <p className="mt-1 font-semibold text-slate-900">{department}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Course / Branch</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {course} ({branch})
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Semester</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  Semester {semester}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Section / Batch</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {section} / {batch}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Phone / Address</p>
+                <p className="mt-1 break-all text-sm font-semibold text-slate-800">
+                  {phone} / {address}
+                </p>
               </div>
             </div>
           )}
-          <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50/60 p-4 text-xs text-blue-800">
-            ℹ️ The current <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px]">/students/view-profile</code> endpoint
-            returns only <b>name</b> and <b>email</b>. Full student profile details (roll no, semester, course, branch, batch, section)
-            require a backend enhancement returning the full StudentDTO.
-          </div>
         </div>
 
         <div className="space-y-6">

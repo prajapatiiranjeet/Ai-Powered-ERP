@@ -1,6 +1,9 @@
 import { apiRequest } from './api.js';
 
 export const facultyService = {
+  viewProfile() {
+    return apiRequest('/faculty/view-profile', { method: 'GET' });
+  },
   updateProfile(dto) {
     return apiRequest('/faculty/faculty-update', { method: 'PUT', body: dto });
   },

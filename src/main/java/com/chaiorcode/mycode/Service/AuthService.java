@@ -226,8 +226,11 @@ public class AuthService {
         String jwtToken = jwtService
                 .generatJwttoken((UserDetails) Objects.requireNonNull(authentication.getPrincipal()));
         System.out.println(jwtToken);
-        return new LoginResponceDTO(id, jwtToken);
-
+        String roleStr = user.getRole() != null ? user.getRole().name() : "STUDENT";
+        if ("STUDENTS".equalsIgnoreCase(roleStr)) {
+            roleStr = "STUDENT";
+        }
+        return new LoginResponceDTO(id, jwtToken, roleStr, user.getName(), user.getEmail());
     }
 
 

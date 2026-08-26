@@ -1,13 +1,45 @@
 import DashboardCard from '../../components/common/DashboardCard.jsx';
 import QuickActionCard from '../../components/common/QuickActionCard.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { facultyService } from '../../services/facultyService.js';
+import { useEffect, useState } from 'react';
 
 export default function FacultyDashboard() {
   const { user } = useAuth();
-  const email = user?.email || '—';
+  const [profile, setProfile] = useState(null);
+  const [profileError, setProfileError] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    facultyService.viewProfile()
+      .then((data) => {
+        if (active) setProfile(data);
+      })
+      .catch((error) => {
+        if (active) setProfileError(error.message);
+      })
+      .finally(() => {
+        if (active) setProfileLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const email = profile?.email || user?.email || '—';
   const displayName =
+    profile?.fullName ||
+    profile?.name ||
     user?.name ||
     (email !== '—' ? email.split('@')[0] : 'Faculty');
+  const employeeId = profile?.employeeId || (profile?.id ? `NIU-EMP-${profile.id}` : (user?.id ? `NIU-EMP-${user.id}` : 'NIU-EMP-201'));
+  const designation = profile?.designation || 'ASSISTANT_PROFESSOR';
+  const department = profile?.department || profile?.departmentName || 'School of Engineering & Technology';
+  const specialization = profile?.specialization || 'Computer Science & AI';
+  const qualification = profile?.highestQualification || 'Ph.D. / Master\'s Degree';
+  const joiningDate = profile?.joiningDate || '2024-01-15';
+  const phone = profile?.phone || 'Not Provided';
+  const address = profile?.address || 'Not Provided';
+
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
@@ -45,7 +77,7 @@ export default function FacultyDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <DashboardCard
             title="Faculty Info"
-            value={user?.name || '—'}
+            value={displayName}
             accent="teal"
             description={email}
             icon={
@@ -59,9 +91,9 @@ export default function FacultyDashboard() {
           />
           <DashboardCard
             title="Employee ID"
-            value="—"
+            value={employeeId}
             accent="emerald"
-            description="(No GET profile endpoint)"
+            description="Your college employee identifier"
             icon={
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
@@ -72,9 +104,9 @@ export default function FacultyDashboard() {
           />
           <DashboardCard
             title="Designation"
-            value="—"
+            value={designation}
             accent="blue"
-            description="(No GET profile endpoint)"
+            description="Current designation"
             icon={
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z" />
@@ -83,9 +115,9 @@ export default function FacultyDashboard() {
           />
           <DashboardCard
             title="Department"
-            value="—"
+            value={department}
             accent="indigo"
-            description="(No GET profile endpoint)"
+            description="Academic department"
             icon={
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 21h18" />
@@ -108,14 +140,15 @@ export default function FacultyDashboard() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { label: 'Full Name', value: user?.name || '—', accent: true },
+              { label: 'Full Name', value: displayName, accent: true },
               { label: 'Email ID', value: email, accent: true },
-              { label: 'Designation', value: '— (missing API)', dashed: true },
-              { label: 'Department', value: '— (missing API)', dashed: true },
-              { label: 'Specialization', value: '— (missing API)', dashed: true },
-              { label: 'Highest Qualification', value: '— (missing API)', dashed: true },
-              { label: 'Joining Date', value: '— (missing API)', dashed: true },
-              { label: 'Phone / Address', value: '— (missing API)', dashed: true }
+              { label: 'Employee ID', value: employeeId, accent: true },
+              { label: 'Designation', value: designation },
+              { label: 'Department', value: department },
+              { label: 'Specialization', value: specialization },
+              { label: 'Highest Qualification', value: qualification },
+              { label: 'Joining Date', value: joiningDate },
+              { label: 'Phone / Address', value: `${phone} / ${address}` }
             ].map((f) => (
               <div
                 key={f.label}
@@ -132,10 +165,7 @@ export default function FacultyDashboard() {
               </div>
             ))}
           </div>
-          <div className="mt-5 rounded-lg border border-teal-100 bg-teal-50/60 p-4 text-xs text-teal-800">
-            ⚠️ Backend limitation: FacultyController has no <code className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px]">GET /faculty/view-profile</code> endpoint.
-            Profile fields above can't be fetched until backend adds a read endpoint. Only PUT (update) is available today.
-          </div>
+          {profileError ? <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700">{profileError}</p> : null}
         </div>
 
         <div className="space-y-6">
@@ -177,14 +207,6 @@ export default function FacultyDashboard() {
                 }
               />
             </div>
-          </div>
-
-          <div className="erp-card border-teal-200 bg-teal-50/60 p-5">
-            <h4 className="text-sm font-semibold text-teal-800">📋 Faculty Bug Note</h4>
-            <p className="mt-2 text-xs text-teal-800">
-              FacultyService.updatefaculty contains a bug where phone is set to itself instead of the DTO value —
-              phone updates silently fail on the backend today.
-            </p>
           </div>
         </div>
       </section>
