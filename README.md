@@ -44,6 +44,7 @@ The project features a robust **Spring Boot 4.1.0 (Java 21)** backend with **Pos
 - **User Management**: Modals to register new Faculty members, Admin accounts, and Students.
 - **Department & Course Scaffolding**: Dynamic department option lookups, branch selections, and course subject assignments.
 - **Knowledge Base RAG Uploader**: Portal for administrators to upload university handbooks, policy PDFs, and examination calendars for AI indexing.
+- **Admin-only uploads**: Select PDF, DOC, or DOCX files, review the selected files, and click the upload button to index them.
 
 ### 🎓 3. Student Academic Portal
 - **Academic Snapshot**: Track attendance percentages, active course enrollments, grade point averages, and fee receipts.
@@ -55,8 +56,26 @@ The project features a robust **Spring Boot 4.1.0 (Java 21)** backend with **Pos
 
 ### 🤖 5. SHERPAL AI Assistant
 - **Glassmorphism UI**: Floating glass chatbot widget with ambient glows, sound feedback, and typing indicators.
+- **Lion branding**: SHERPAL uses the linked lion icon in its launcher and chat header.
 - **Role-Tailored Quick Prompts**: Quick prompt buttons for Students (*Exam Schedule*, *Fee Status*), Faculty (*Grade Submission*, *Leave Application*), and Admins (*User Management*, *Audit Logs*).
 - **Control Bar**: Sound toggle (Web Audio FX), conversation clearing, window minimization, and chat expand.
+
+### 🧠 6. RAG Integration
+- **Chat access**: Admin, Faculty, and Student users chat through their role-specific protected endpoint.
+- **Document indexing**: Admin uploads are sent as multipart files to the Spring Boot upload endpoint and stored in PGVector.
+- **Table-aware DOCX extraction**: DOCX tables are converted to row-wise text with column separators before chunking, preserving header/value relationships for retrieval.
+- **Upload independence**: File extraction and indexing do not call the Ollama chat endpoint. Ollama is used for embeddings and SHERPAL answers.
+
+| Use case | Endpoint | Permission |
+| :--- | :--- | :--- |
+| Upload document | `POST /admin/upload-documents` | ADMIN |
+| Ask SHERPAL | `POST /admin/ask-to-sherpal` | ADMIN |
+| Ask SHERPAL | `POST /faculty/ask-to-sherpal` | FACULTY |
+| Ask SHERPAL | `POST /students/ask-to-sherpal` | STUDENT |
+
+### 🧪 Test Data
+- [ERP Data test files](https://www.dropbox.com/scl/fo/bdknfl8ppsod4oxo0yr0k/ABAh9HgxKbn_JoPBr7YKMto?rlkey=90sya82ekh35aioqezv590atq&st=ibn4xrha&dl=0) (Dropbox shared folder)
+- Upload supported PDF, DOC, or DOCX files from this folder through the Admin dashboard, then ask SHERPAL questions about the indexed content.
 
 ---
 
