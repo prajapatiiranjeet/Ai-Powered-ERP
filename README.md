@@ -179,9 +179,73 @@ Ensure you have the following installed on your machine:
    spring.jpa.hibernate.ddl-auto=update
    ```
 
+### 3. RAG Setup (PGVector + Ollama + Spring AI)
+
+RAG requires PostgreSQL with the **pgvector** extension and a local Ollama instance. The backend uses Spring AI `1.0.8`, PGVector for document embeddings, and Ollama for embeddings and SHERPAL responses.
+
+#### PostgreSQL and PGVector
+
+Install a PostgreSQL build that includes pgvector, or install the pgvector extension for your PostgreSQL version. Then enable it in the ERP database:
+
+```sql
+CREATE DATABASE postgres;
+\c postgres
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+The application is configured to create/update the Spring AI vector-store schema automatically:
+
+```properties
+spring.ai.vectorstore.pgvector.initialize-schema=true
+spring.ai.vectorstore.pgvector.index-type=hnsw
+spring.ai.vectorstore.pgvector.distance-type=cosine_distance
+spring.ai.vectorstore.pgvector.dimensions=768
+```
+
+The `dimensions=768` value must match the output size of the configured embedding model.
+
+#### Ollama Models
+
+Install and start [Ollama](https://ollama.com/download), then pull both models used by the backend:
+
+```powershell
+ollama serve
+ollama pull nomic-embed-text
+ollama pull phi4-mini
+```
+
+The default configuration is:
+
+```properties
+spring.ai.ollama.base-url=http://localhost:11434
+spring.ai.ollama.embedding.options.model=nomic-embed-text:latest
+spring.ai.ollama.chat.options.model=phi4-mini:latest
+spring.ai.ollama.chat.options.temperature=0
+```
+
+`nomic-embed-text` is used when documents are indexed and searched. `phi4-mini` is used to generate SHERPAL answers. The browser does not call Ollama directly; it calls the Spring Boot endpoints.
+
+#### Spring AI Dependencies
+
+These dependencies are already present in `pom.xml` and are resolved through the Spring AI BOM:
+
+- `spring-ai-starter-model-ollama`
+- `spring-ai-starter-vector-store-pgvector`
+- `spring-ai-pdf-document-reader`
+- `spring-ai-tika-document-reader`
+- Spring AI BOM version `1.0.8`
+
+#### RAG Run Order
+
+1. Start PostgreSQL and confirm the `vector` extension is enabled.
+2. Start Ollama and confirm both models are available with `ollama list`.
+3. Start the Spring Boot backend on port `8080`.
+4. Log in as an Admin and upload a PDF, DOC, or DOCX from the Admin dashboard.
+5. Wait for the upload/indexing success message, then ask SHERPAL about the uploaded document from any role portal.
+
 ---
 
-### 3. Running Backend (Spring Boot)
+### 4. Running Backend (Spring Boot)
 Open a terminal in the root `Ai-Powered-ERP` directory:
 
 **On Windows:**
@@ -197,7 +261,7 @@ The backend server will start on `http://localhost:8080`.
 
 ---
 
-### 4. Running Frontend (React + Vite)
+### 5. Running Frontend (React + Vite)
 Open a new terminal window in the root `Ai-Powered-ERP` directory:
 
 ```bash
@@ -273,7 +337,7 @@ git push origin main
 
 ## 🔮 Future Roadmap
 
-- [ ] Complete backend RAG (Retrieval-Augmented Generation) LangChain/Python service connection for **SHERPAL AI**.
+- [x] Spring AI RAG document upload, PGVector indexing, and role-based SHERPAL chat.
 - [ ] Real-time WebSocket notifications for attendance alerts and exam schedules.
 - [ ] Student Fee Payment Gateway Integration (Razorpay/Stripe).
 - [ ] Automated Grade Card Generator & Export to PDF.
