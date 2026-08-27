@@ -79,22 +79,30 @@ The project features a robust **Spring Boot 4.1.0 (Java 21)** backend with **Pos
 
 ---
 
-## 📸 Screenshots
+## 📸 Application Screenshots & Architecture
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
-spring.datasource.username=postgres
-spring.datasource.password=YOUR_POSTGRES_PASSWORD
-```
+### 🔐 1. Login Portal (Glassmorphism UI)
+![Login Portal](db/Screenshot%202026-08-27%20073302.png)
 
-| Page / Feature | Screenshot Preview |
-| :--- | :--- |
-| **Login Portal (Glass UI)** | ![Login Page](db/Screenshot%202026-08-26%20184328.png) |
-| **Admin Command Center** | ![Admin Overview](db/Screenshot%202026-08-26%20184344.png) |
-| **Faculty Registration Modal** | ![Register Faculty Modal](db/Screenshot%202026-08-26%20184633.png) |
-| **Student Registration Modal** | ![Register Student Modal](db/Screenshot%202026-08-26%20184656.png) |
-| **SHERPAL AI Assistant** | ![SHERPAL AI](db/Screenshot%202026-08-27%20051423.png) |
-| **RAG Knowledge Base Uploader** | ![Knowledge Base](db/Screenshot%202026-08-26%20193636.png) |
+---
+
+### 🛡️ 2. Admin Command Center & RAG Knowledge Base Uploader
+![Admin Overview](db/Screenshot%202026-08-27%20073319.png)
+
+---
+
+### 🤖 3. SHERPAL AI Assistant & Document RAG Engine
+![SHERPAL AI Chatbot](db/Screenshot%202026-08-27%20073349.png)
+
+---
+
+### 🎓 4. Student Academic Portal & Dashboard
+![Student Portal](db/Screenshot%202026-08-27%20073456.png)
+
+---
+
+### 🗄️ 5. PostgreSQL ERD Database Schema
+![Database ERD Schema](db/db%20image.pgerd.png)
 
 ---
 
