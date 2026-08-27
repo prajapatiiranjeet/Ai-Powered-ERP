@@ -23,7 +23,7 @@ The project features a robust **Spring Boot 4.1.0 (Java 21)** backend with **Pos
 - Controllers for authentication, admin actions, student actions, and faculty actions
 - DTOs, Entities, Repositories, Services, and basic security setup
 > ⚠️ **Work In Progress (Active Development)**  
-> This project is currently under active development. Core authentication, role dashboards (Admin, Faculty, Student), administrative CRUD operations, and the SHERPAL AI assistant UI are functional. RAG vector database connections and advanced module logic are being integrated.
+> This project is currently under active development. Core authentication, role dashboards (Admin, Faculty, Student), administrative CRUD operations, SHERPAL AI assistant, RAG document upload, vector indexing, and role-based document chat are functional. Advanced ERP module logic is still being developed.
 
 ---
 
