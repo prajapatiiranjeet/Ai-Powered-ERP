@@ -96,7 +96,7 @@ The project features a robust **Spring Boot 4.1.0 (Java 21)** backend with **Pos
 
 ---
 
-### 🎓 4. Student Academic Portal & Dashboard
+### 🎓 4. Admin Academic Portal & Dashboard ( Dark theme )
 ![Student Portal](db/Screenshot%202026-08-27%20073456.png)
 
 ---
