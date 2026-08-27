@@ -83,23 +83,16 @@
                     Answer:
                     """.formatted(context, question);
 
-// Generate answer
             String answer = chatClient.prompt()
                     .system("""
-                            You are a helpful and knowledgeable AI assistant. 
-                            Your Name is Sherpal.
+                            You are SHERPAL AI, an intelligent, helpful campus assistant for Noida International University.
                             
                             Instructions:
-                            - Answer accurately and clearly.
-                            - If the user asks for a point-to-point answer, respond with concise bullet points only.
-                            - If the user asks for a brief explanation, provide a short, well-structured response with headings and bullet points where appropriate.
-                            - If the user asks for a detailed explanation, provide a comprehensive answer with clear sections, examples, and step-by-step explanations when helpful.
-                            - Adapt the response length and style to the user's request.
-                            - Avoid unnecessary repetition.
+                            - Answer accurately and clearly using the provided document context (both text and tables).
+                            - For questions requesting tabular data or comparisons (e.g., schedules, grade sheets, fee structures, rosters), format the response as a Markdown table (| Header 1 | Header 2 |...).
+                            - For numerical questions (e.g. SUM, AVG, COUNT, MIN, MAX, highest/lowest salary, total sales), perform exact calculations directly from the provided table rows in context. Do NOT hallucinate uncalculated values.
+                            - If the exact answer or required table data is not present in context, state: "This information is not in the uploaded document."
                             - Use Markdown formatting for readability.
-                            - Never add information outside the provided context.
-                            - If the answer is not in the context, reply only with:
-                            "This information is not in the uploaded document."
                             """)
                     .user(prompt)
                     .call()
@@ -109,68 +102,47 @@
         }
 
 
-            @PostMapping("/upload-documents")
+        @Autowired
+        private com.chaiorcode.mycode.Service.rag.PdfIngestionService pdfIngestionService;
+
+        @PostMapping("/upload-documents")
         public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) {
             try {
-                // Extract content
-                DocumentReader reader;
-                String filename = file.getOriginalFilename();
-
-
-                Resource resource = new InputStreamResource(file.getInputStream());
-
-                if (filename != null && filename.endsWith(".pdf")) {
-                    reader = new PagePdfDocumentReader(resource);
-                } else if (filename != null &&
-                        (filename.endsWith(".docx") || filename.endsWith(".doc"))) {
-                    reader = new TikaDocumentReader(resource);
-                } else {
-                    return ResponseEntity.badRequest().body("Only PDF and DOCX allowed");
+                if (file.isEmpty()) {
+                    return ResponseEntity.badRequest().body("Uploaded file is empty.");
                 }
 
-                List<Document> documents = reader.read();
-                String tableText = extractDocxTables(file, filename);
-
-                List<Document> cleanedDocuments = documents.stream()
-                    .map(doc -> {
-                        Map<String, Object> metadata = new HashMap<>(doc.getMetadata());
-                        metadata.entrySet().removeIf(entry -> entry.getValue() == null);
-                            String content = tableText.isBlank() ? doc.getText() : doc.getText() + "\n\n" + tableText;
-                            return new Document(content, metadata);
-                    })
-                    .toList();
-
-
-
-//            String content = documents.stream()
-//                    .map(Document::getText)
-//                    .collect(Collectors.joining("\n"));
-
-                List<Document> chunks = chunkingService.split(cleanedDocuments);
-//            System.out.println("Chunks to store: " + chunks.size());
-//            System.out.println("First chunk content: " + chunks.get(0).getText().substring(0, 100));
-
-                vectorStore.add(chunks);
-
-//            EmbeddingResponse response =
-//                    embeddingModel.embedForResponse(chunks);
-//            System.out.println(response);
-
-
-
-//
-
-
-                // Now you have the text. Feed it to your VectorStore.
-                // vectorStore.add(documents); // Split and store as needed
-
-
-
-                return ResponseEntity.ok("Content extracted. Length: " );
-
+                String result = pdfIngestionService.ingestPdf(file);
+                return ResponseEntity.ok(result);
             } catch (Exception e) {
-                return ResponseEntity.internalServerError().body("Failed: " + e.getMessage());
+                return ResponseEntity.internalServerError().body("Failed to ingest PDF document: " + e.getMessage());
             }
+        }
+
+        private String convertCsvToMarkdownTable(String csvContent) {
+            if (csvContent == null || csvContent.isBlank()) return "";
+            String[] lines = csvContent.split("\r?\n");
+            if (lines.length == 0) return "";
+
+            StringBuilder sb = new StringBuilder("\n");
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i].trim();
+                if (line.isEmpty()) continue;
+                String[] cols = line.split(",");
+                sb.append("| ");
+                for (int c = 0; c < cols.length; c++) {
+                    sb.append(cols[c].trim().replaceAll("^\"|\"$", "")).append(c < cols.length - 1 ? " | " : " ");
+                }
+                sb.append("|\n");
+                if (i == 0) {
+                    sb.append("| ");
+                    for (int c = 0; c < cols.length; c++) {
+                        sb.append("---").append(c < cols.length - 1 ? " | " : " ");
+                    }
+                    sb.append("|\n");
+                }
+            }
+            return sb.toString();
         }
 
         private String extractDocxTables(MultipartFile file, String filename) throws Exception {
@@ -183,14 +155,24 @@
                 int tableNumber = 1;
                 for (XWPFTable table : document.getTables()) {
                     tables.append("\nTable ").append(tableNumber++).append(":\n");
-                    table.getRows().forEach(row -> {
+                    List<XWPFTableRow> rows = table.getRows();
+                    for (int i = 0; i < rows.size(); i++) {
+                        XWPFTableRow row = rows.get(i);
                         String rowText = row.getTableCells().stream()
                                 .map(cell -> cell.getText().replaceAll("\\s+", " ").trim())
                                 .collect(Collectors.joining(" | "));
                         if (!rowText.isBlank()) {
-                            tables.append(rowText).append("\n");
+                            tables.append("| ").append(rowText).append(" |\n");
+                            if (i == 0) {
+                                int colCount = row.getTableCells().size();
+                                tables.append("| ");
+                                for (int c = 0; c < colCount; c++) {
+                                    tables.append("---").append(c < colCount - 1 ? " | " : " ");
+                                }
+                                tables.append("|\n");
+                            }
                         }
-                    });
+                    }
                 }
             }
             return tables.toString().trim();

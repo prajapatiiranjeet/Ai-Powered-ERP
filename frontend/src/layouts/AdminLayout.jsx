@@ -24,7 +24,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:pl-64">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#07130f] dark:text-slate-100 lg:pl-64 transition-colors duration-200">
       <Sidebar
         role="ADMIN"
         roleAccent="admin"

@@ -255,24 +255,24 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome banner */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               {today}
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 md:text-2xl">
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
               Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'} 👋
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 md:text-sm">
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
               Noida International University · Administrative Command Center
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
               <span className="h-2 w-2 rounded-full bg-emerald-500" /> System Online
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
               Administrator
             </span>
           </div>
@@ -420,8 +420,8 @@ export default function AdminDashboard() {
 
       <section>
         <div className="space-y-6">
-          <div className="erp-card border-niu-green-200/60 bg-gradient-to-br from-niu-green-50/50 via-white to-amber-50/20 p-6">
-            <h3 className="text-base font-bold text-slate-900">Administrative Utilities</h3>
+          <div className="erp-card border-niu-green-200/60 bg-gradient-to-br from-niu-green-50/50 via-white to-amber-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 dark:border-slate-800 p-6">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Administrative Utilities</h3>
             <ul className="mt-4 space-y-2 text-sm">
               {[
                 { label: 'Reset user password', icon: '🔐' },
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
                 { label: 'Remove a student record', icon: '🗑️' },
                 { label: 'Update department details', icon: '🏛️' }
               ].map((s) => (
-                <li key={s.label} className="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-700 hover:bg-white shadow-sm transition">
+                <li key={s.label} className="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800 shadow-sm transition">
                   <span className="text-lg">{s.icon}</span>
                   <span className="flex-1 font-medium">{s.label}</span>
                   <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
@@ -444,13 +444,13 @@ export default function AdminDashboard() {
 
       {registrationRole ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeRegistration}>
-          <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="registration-title">
+          <section className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 dark:border dark:border-slate-800 p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="registration-title">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600">Admin Portal</p>
-                <h3 id="registration-title" className="mt-1 text-xl font-black text-slate-900">Register {registrationRole === 'STUDENT' ? 'Student' : registrationRole === 'ADMIN' ? 'Admin' : 'Faculty'}</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600 dark:text-emerald-400">Admin Portal</p>
+                <h3 id="registration-title" className="mt-1 text-xl font-black text-slate-900 dark:text-white">Register {registrationRole === 'STUDENT' ? 'Student' : registrationRole === 'ADMIN' ? 'Admin' : 'Faculty'}</h3>
               </div>
-              <button type="button" onClick={closeRegistration} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close registration dialog">×</button>
+              <button type="button" onClick={closeRegistration} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close registration dialog">×</button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={submitRegistration}>
               <label className="erp-label">Full name<input className="erp-input mt-1" required value={registrationForm.name} onChange={(event) => setRegistrationForm({ ...registrationForm, name: event.target.value })} /></label>

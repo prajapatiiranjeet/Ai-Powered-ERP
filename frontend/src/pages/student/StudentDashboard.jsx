@@ -46,24 +46,24 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome banner */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
               {today}
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 md:text-2xl">
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
               Welcome back, {name.split(' ')[0]} 🎓
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 md:text-sm">
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
               Noida International University · Student Portal
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
               <span className="h-2 w-2 rounded-full bg-emerald-500" /> Semester Active
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
               Student
             </span>
           </div>
@@ -147,8 +147,8 @@ export default function StudentDashboard() {
         <div className="erp-card p-6 xl:col-span-2">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">My Profile</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">My Profile</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Complete information fetched from your student account
               </p>
             </div>
@@ -161,43 +161,43 @@ export default function StudentDashboard() {
             <ErrorMessage message={err} />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Full Name</p>
-                <p className="mt-1 font-semibold text-slate-900">{name}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Full Name</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">{name}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Email ID</p>
-                <p className="mt-1 break-all font-semibold text-slate-900">{email}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Email ID</p>
+                <p className="mt-1 break-all font-semibold text-slate-900 dark:text-white">{email}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Roll Number</p>
-                <p className="mt-1 font-mono font-semibold text-slate-900">{rollNo}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Roll Number</p>
+                <p className="mt-1 font-mono font-semibold text-slate-900 dark:text-white">{rollNo}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Department</p>
-                <p className="mt-1 font-semibold text-slate-900">{department}</p>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Department</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">{department}</p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Course / Branch</p>
-                <p className="mt-1 font-semibold text-slate-900">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Course / Branch</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                   {course} ({branch})
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Semester</p>
-                <p className="mt-1 font-semibold text-slate-900">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Semester</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                   Semester {semester}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Section / Batch</p>
-                <p className="mt-1 font-semibold text-slate-900">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Section / Batch</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                   {section} / {batch}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">Phone / Address</p>
-                <p className="mt-1 break-all text-sm font-semibold text-slate-800">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Phone / Address</p>
+                <p className="mt-1 break-all text-sm font-semibold text-slate-800 dark:text-slate-200">
                   {phone} / {address}
                 </p>
               </div>

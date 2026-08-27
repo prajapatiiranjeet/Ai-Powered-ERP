@@ -1,9 +1,9 @@
 export default function Navbar({ title, subtitle, userEmail, userName, onLogout, onMenuToggle, roleAccent }) {
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md md:px-8">
+    <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 md:px-8 transition-colors duration-200">
       <button
         type="button"
-        className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden"
+        className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
         onClick={onMenuToggle}
         aria-label="Open menu"
       >
@@ -24,26 +24,26 @@ export default function Navbar({ title, subtitle, userEmail, userName, onLogout,
             alt="NIU Logo"
             className="h-7 w-7 object-contain"
           />
-          <h1 className="truncate text-lg font-bold text-slate-900 md:text-xl">{title}</h1>
-          <span className="hidden rounded-md bg-niu-green-50 px-2 py-0.5 text-[11px] font-bold text-niu-green-600 ring-1 ring-niu-green-500/20 sm:inline-block">
+          <h1 className="truncate text-lg font-bold text-slate-900 dark:text-white md:text-xl">{title}</h1>
+          <span className="hidden rounded-md bg-niu-green-50 px-2 py-0.5 text-[11px] font-bold text-niu-green-600 ring-1 ring-niu-green-500/20 dark:bg-emerald-950 dark:text-emerald-300 sm:inline-block">
             NIU System
           </span>
         </div>
-        {subtitle ? <p className="hidden truncate text-xs text-slate-500 md:block">{subtitle}</p> : null}
+        {subtitle ? <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 md:block">{subtitle}</p> : null}
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 md:flex">
+        <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 dark:border-slate-800 dark:bg-slate-800/60 md:flex">
           <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
-          <span className="text-xs font-semibold text-slate-700">Online</span>
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Online</span>
         </div>
 
         {/* User Badge */}
-        <div className="flex items-center gap-3 rounded-full border border-slate-200/80 bg-white p-1 pl-3.5 shadow-sm">
+        <div className="flex items-center gap-3 rounded-full border border-slate-200/80 bg-white p-1 pl-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
           <div className="hidden min-w-0 text-right md:block">
-            {userName ? <p className="truncate text-xs font-bold text-slate-900">{userName}</p> : null}
-            <p className="truncate text-[11px] font-medium text-slate-500">{userEmail ?? '—'}</p>
+            {userName ? <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{userName}</p> : null}
+            <p className="truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{userEmail ?? '—'}</p>
           </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-niu-green-600 to-niu-green-800 text-xs font-black text-niu-gold-400 shadow-sm ring-2 ring-niu-gold-400/50">
             {(userName ?? userEmail ?? '?').charAt(0).toUpperCase()}
@@ -54,7 +54,7 @@ export default function Navbar({ title, subtitle, userEmail, userName, onLogout,
         <button
           type="button"
           onClick={onLogout}
-          className="erp-btn-secondary hidden !px-3.5 !py-2 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 md:inline-flex"
+          className="erp-btn-secondary hidden !px-3.5 !py-2 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 md:inline-flex"
           title="Sign out"
         >
           <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -74,7 +74,7 @@ export default function Navbar({ title, subtitle, userEmail, userName, onLogout,
         <button
           type="button"
           onClick={onLogout}
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
+          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
           aria-label="Sign out"
           title="Sign out"
         >

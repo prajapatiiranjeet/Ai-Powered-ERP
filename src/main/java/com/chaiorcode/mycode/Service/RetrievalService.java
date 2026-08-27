@@ -17,8 +17,15 @@ public class RetrievalService {
     }
 
     public List<Document> search(String query) {
+        return search(query, 6);
+    }
+
+    public List<Document> search(String query, int topK) {
         return vectorStore.similaritySearch(
-                SearchRequest.builder().query(query).topK(5).build()
+                SearchRequest.builder()
+                        .query(query)
+                        .topK(topK)
+                        .build()
         );
     }
 }
