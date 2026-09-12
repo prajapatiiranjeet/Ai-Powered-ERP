@@ -234,7 +234,8 @@ public class AuthService {
     }
 
 
+    public String findNameByEmail(String email) {
 
-
-
+        return userRepo.findNameByEmail(email);
+    }
 }

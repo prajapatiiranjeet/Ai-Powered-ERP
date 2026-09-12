@@ -207,10 +207,18 @@ The application is configured to create/update the Spring AI vector-store schema
 spring.ai.vectorstore.pgvector.initialize-schema=true
 spring.ai.vectorstore.pgvector.index-type=hnsw
 spring.ai.vectorstore.pgvector.distance-type=cosine_distance
-spring.ai.vectorstore.pgvector.dimensions=768
+spring.ai.vectorstore.pgvector.dimensions=1024
 ```
 
-The `dimensions=768` value must match the output size of the configured embedding model.
+The `dimensions=1024` value must match the output size of `qwen3-embedding:0.6b`.
+If the embedding model or dimension changes after the vector store has been initialized,
+the existing `vector_store` table must be migrated or recreated before uploading documents.
+For disposable demo data, run this in the configured PostgreSQL database and restart the
+backend so Spring AI recreates the table:
+
+```sql
+DROP TABLE IF EXISTS vector_store;
+```
 
 #### Ollama Models
 
@@ -218,20 +226,23 @@ Install and start [Ollama](https://ollama.com/download), then pull both models u
 
 ```powershell
 ollama serve
-ollama pull nomic-embed-text
-ollama pull phi4-mini
+ollama pull qwen3-embedding:0.6b
+ollama pull phi4-mini:3.8b
 ```
 
 The default configuration is:
 
 ```properties
 spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.embedding.options.model=nomic-embed-text:latest
-spring.ai.ollama.chat.options.model=phi4-mini:latest
+spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b
+spring.ai.ollama.chat.options.model=phi4-mini:3.8b
 spring.ai.ollama.chat.options.temperature=0
 ```
 
-`nomic-embed-text` is used when documents are indexed and searched. `phi4-mini` is used to generate SHERPAL answers. The browser does not call Ollama directly; it calls the Spring Boot endpoints.
+`qwen3-embedding:0.6b` is used when documents are indexed and searched. It produces
+1024-dimensional embeddings. `phi4-mini:3.8b` is used to clean extracted document
+text and generate SHERPAL answers. The browser does not call Ollama directly; it calls
+the Spring Boot endpoints.
 
 #### Spring AI Dependencies
 
