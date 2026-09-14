@@ -191,6 +191,25 @@ public class AuthService {
 
     }
 
+    public String changePasswordForAdmin(String email, String password) {
+        CreateUserDto request = new CreateUserDto();
+        request.setEmail(email);
+        request.setPassword(password);
+        return changepassword(request);
+    }
+
+    public java.util.List<com.chaiorcode.mycode.DTO.AdminUserOptionDTO> getAdminUserOptions(
+            com.chaiorcode.mycode.Enum.Role role, Long departmentId, Long courseId, Long branchId, Long batchId, Long sectionId) {
+        if (role == com.chaiorcode.mycode.Enum.Role.STUDENT) {
+            var students = new java.util.ArrayList<>(userRepo.findAdminUserOptions(
+                com.chaiorcode.mycode.Enum.Role.STUDENT, departmentId, courseId, branchId, batchId, sectionId));
+            students.addAll(userRepo.findAdminUserOptions(
+                com.chaiorcode.mycode.Enum.Role.STUDENTS, departmentId, courseId, branchId, batchId, sectionId));
+            return students;
+        }
+        return userRepo.findAdminUserOptions(role, departmentId, courseId, branchId, batchId, sectionId);
+    }
+
     // ***************************************************************************************************************************************************************************************
     // yaha se login hoga jwt token se
     public LoginResponceDTO login(LoginDTO loginDTO) {

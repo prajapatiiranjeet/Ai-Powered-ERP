@@ -95,12 +95,42 @@ public class StudentService {
         return studentRepository.findAll().stream().map(Student::getFirstName).toList();
     }
 
+    public List<StudentDTO> getAdminStudentRecords() {
+        return studentRepository.findAll().stream().map(student -> {
+            StudentDTO dto = new StudentDTO();
+            dto.setId(student.getId());
+            dto.setRollNo(student.getRollNo());
+            dto.setFirstName(student.getFirstName());
+            dto.setLastName(student.getLastName());
+            dto.setEmail(student.getEmail());
+            dto.setPhone(student.getPhone());
+            dto.setAddress(student.getAddress());
+            dto.setSemester(student.getSemester());
+            return dto;
+        }).toList();
+    }
+
+    public Student updateStudentByEmail(String email, StudentDTO studentDTO) {
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return updateStudentRecord(student, studentDTO);
+    }
+
     public String deleteStudent(String email) {
-        Student student = studentRepository.findByUserEmail(email)
+        Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
         String name = student.getFirstName();
         studentRepository.deleteByUserEmail(email);
         return name;
+    }
+
+    private Student updateStudentRecord(Student student, StudentDTO studentDTO) {
+        if (studentDTO.getFirstName() != null) student.setFirstName(studentDTO.getFirstName());
+        if (studentDTO.getLastName() != null) student.setLastName(studentDTO.getLastName());
+        if (studentDTO.getPhone() != null) student.setPhone(studentDTO.getPhone());
+        if (studentDTO.getAddress() != null) student.setAddress(studentDTO.getAddress());
+        if (studentDTO.getSemester() != null) student.setSemester(studentDTO.getSemester());
+        return studentRepository.save(student);
     }
 
     @Transactional

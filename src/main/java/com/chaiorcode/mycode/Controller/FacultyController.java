@@ -2,12 +2,19 @@ package com.chaiorcode.mycode.Controller;
 
 
 import com.chaiorcode.mycode.DTO.CreateUserDto;
+import com.chaiorcode.mycode.DTO.AttendanceMarkRequest;
+import com.chaiorcode.mycode.DTO.AttendanceRosterItem;
 import com.chaiorcode.mycode.DTO.FacultyProfileDTO;
 import com.chaiorcode.mycode.DTO.FacultyRequestDTO;
+import com.chaiorcode.mycode.DTO.SubjectOfferingDTO;
 import com.chaiorcode.mycode.Entity.Faculty;
+import com.chaiorcode.mycode.Entity.SubjectOffering;
+import com.chaiorcode.mycode.Repo.SubjectOfferingRepository;
 import com.chaiorcode.mycode.Service.AuthService;
+import com.chaiorcode.mycode.Service.AttendanceService;
 import com.chaiorcode.mycode.Service.FacultyService;
 import com.chaiorcode.mycode.Service.RetrievalService;
+import com.chaiorcode.mycode.Service.SubjectOfferingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -16,8 +23,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/faculty")
@@ -34,6 +44,39 @@ public class FacultyController {
 
     private final RetrievalService retrievalService;
     private final ChatClient chatClient;
+    private final SubjectOfferingRepository subjectOfferingRepository;
+    private final SubjectOfferingService subjectOfferingService;
+    private final AttendanceService attendanceService;
+
+
+    // Step 1: Faculty login karke apne offerings dekhta hai (dropdown me "Subject - Section" dikhega)
+    @GetMapping("/my-subjects")
+    public ResponseEntity<List<SubjectOfferingDTO>> getMyOfferings(Authentication auth) {
+        String email = auth.getName();
+        Long facultyid = facultyService.getfacyltyidbyemail(email);
+
+        return ResponseEntity.ok(subjectOfferingService.getMyOfferings(facultyid));
+    }
+
+    // Returns only the selected offering's students and their saved status for this date.
+    @GetMapping("/attendance/roster")
+    public ResponseEntity<List<AttendanceRosterItem>> getAttendanceRoster(
+            @RequestParam Long offeringId,
+            @RequestParam LocalDate date,
+            Authentication auth) {
+        return ResponseEntity.ok(attendanceService.getRoster(auth.getName(), offeringId, date));
+    }
+
+    // Saves the complete date roster; the service performs ownership and section checks.
+    @PostMapping("/attendance")
+    public ResponseEntity<List<AttendanceRosterItem>> markAttendance(
+            @Valid @RequestBody AttendanceMarkRequest request,
+            Authentication auth) {
+        return ResponseEntity.ok(attendanceService.mark(auth.getName(), request));
+    }
+
+
+
 
     @PostMapping("/ask-to-sherpal")
     public ResponseEntity<String> ask(@RequestBody String question) {

@@ -42,6 +42,7 @@ public class websecurityconfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/students/**").hasAnyRole("ADMIN", "STUDENT", "STUDENTS")
                         .requestMatchers("/faculty/**").hasAnyRole("ADMIN", "FACULTY")

@@ -6,6 +6,7 @@ import ErrorMessage from '../../components/common/ErrorMessage.jsx';
 import KnowledgeUploadPanel from '../../components/common/KnowledgeUploadPanel.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { adminService } from '../../services/adminService.js';
+import SubjectAssignmentPanel from '../../components/admin/SubjectAssignmentPanel.jsx';
 
 const departmentOptions = [
   { id: 1, code: 'SET', name: 'School of Engineering and Technology' },
@@ -54,8 +55,8 @@ export default function AdminDashboard() {
   const [facultyCount, setFacultyCount] = useState(0);
   const [departments, setDepartments] = useState(departmentOptions);
   const [courseCount, setCourseCount] = useState(courseOptions.length);
-  const [courses, setCourses] = useState(courseOptions);
-  const [branches, setBranches] = useState(branchOptions);
+  const [courses, setCourses] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
   const [registrationRole, setRegistrationRole] = useState(null);
@@ -63,6 +64,17 @@ export default function AdminDashboard() {
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [registrationError, setRegistrationError] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState('');
+  const [utilityAction, setUtilityAction] = useState('');
+  const [utilityLoading, setUtilityLoading] = useState(false);
+  const [utilityError, setUtilityError] = useState('');
+  const [utilitySuccess, setUtilitySuccess] = useState('');
+  const [userOptions, setUserOptions] = useState([]);
+  const [userCourses, setUserCourses] = useState([]);
+  const [userBranches, setUserBranches] = useState([]);
+  const [userBatches, setUserBatches] = useState([]);
+  const [userSections, setUserSections] = useState([]);
+  const [userFilters, setUserFilters] = useState({ role: 'STUDENT', departmentId: '', courseId: '', branchId: '', batchId: '', sectionId: '' });
+  const [utilityForm, setUtilityForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '', address: '', semester: '', specialization: '', departmentId: '', departmentName: '' });
 
   useEffect(() => {
     let active = true;
@@ -94,21 +106,24 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    setCourses([]);
+    setBranches([]);
     if (!registrationForm.departmentId) {
-      setCourses(courseOptions);
       return;
     }
-    const matchingCourses = courseOptions.filter((course) => course.departmentId === Number(registrationForm.departmentId));
-    setCourses(matchingCourses);
+    adminService.getCourses(registrationForm.departmentId)
+      .then((options) => setCourses(Array.isArray(options) ? options : []))
+      .catch(() => setCourses([]));
   }, [registrationForm.departmentId]);
 
   useEffect(() => {
+    setBranches([]);
     if (!registrationForm.courseId) {
-      setBranches(branchOptions);
       return;
     }
-    const matchingBranches = branchOptions.filter((branch) => branch.courseId === Number(registrationForm.courseId));
-    setBranches(matchingBranches);
+    adminService.getBranches(registrationForm.courseId)
+      .then((options) => setBranches(Array.isArray(options) ? options : []))
+      .catch(() => setBranches([]));
   }, [registrationForm.courseId]);
 
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -184,13 +199,8 @@ export default function AdminDashboard() {
       const res = await adminService.insertCourse(cleanCourseName, dur, deptId);
       setCourseSuccess(typeof res === 'string' ? res : `${cleanCourseName} inserted successfully into DB!`);
       setCourseCount((prev) => prev + 1);
-      const newCourseObj = {
-        id: courseOptions.length + 100 + Math.floor(Math.random() * 1000),
-        departmentId: deptId,
-        name: cleanCourseName
-      };
-      courseOptions.push(newCourseObj);
-      setCourses([...courseOptions]);
+      const refreshedCourses = await adminService.getCourses(deptId);
+      setCourses(Array.isArray(refreshedCourses) ? refreshedCourses : []);
       setCourseForm({ name: '', duration: 4, departmentId: departments[0]?.id ? String(departments[0].id) : '1' });
     } catch (error) {
       setCourseError(error?.message || 'Failed to insert course into database');
@@ -207,6 +217,145 @@ export default function AdminDashboard() {
 
   const closeRegistration = () => {
     if (!registrationLoading) setRegistrationRole(null);
+  };
+
+  const openUtility = async (action) => {
+    setUtilityAction(action);
+    setUtilityError('');
+    setUtilitySuccess('');
+    const defaultRole = action === 'faculty-update' ? 'FACULTY' : 'STUDENT';
+    setUserFilters({ role: defaultRole, departmentId: '', courseId: '', branchId: '', batchId: '', sectionId: '' });
+    setUserCourses([]);
+    setUserBranches([]);
+    setUserBatches([]);
+    setUserSections([]);
+    setUtilityForm({ email: '', password: '', firstName: '', lastName: '', phone: '', address: '', semester: '', specialization: '', departmentId: '', departmentName: '' });
+    if (action === 'password' || action === 'student-update' || action === 'student-delete' || action === 'faculty-update') {
+      setUtilityLoading(true);
+      try {
+        const records = await adminService.getUserOptions({ role: defaultRole });
+        setUserOptions(Array.isArray(records) ? records : []);
+      } catch (error) {
+        setUtilityError(error?.message || 'Unable to load student records');
+      } finally {
+        setUtilityLoading(false);
+      }
+    }
+  };
+
+  const closeUtility = () => {
+    if (!utilityLoading) setUtilityAction('');
+  };
+
+  const selectStudent = (email) => {
+    const student = userOptions.find((item) => item.email === email);
+    setUtilityForm((current) => ({
+      ...current,
+      email,
+      firstName: student?.name || '',
+      lastName: '',
+      phone: '',
+      address: '',
+      semester: ''
+    }));
+  };
+
+  const updateUserFilter = async (name, value) => {
+    const next = { ...userFilters, [name]: value };
+    if (name === 'role') {
+      Object.assign(next, { departmentId: '', courseId: '', branchId: '', batchId: '', sectionId: '' });
+      setUserCourses([]);
+      setUserBranches([]);
+      setUserBatches([]);
+      setUserSections([]);
+    }
+    if (name === 'departmentId') {
+      Object.assign(next, { courseId: '', branchId: '', batchId: '', sectionId: '' });
+      setUserBranches([]);
+    }
+    if (name === 'courseId') Object.assign(next, { branchId: '', batchId: '', sectionId: '' });
+    if (name === 'branchId') Object.assign(next, { batchId: '', sectionId: '' });
+    if (name === 'batchId') Object.assign(next, { sectionId: '' });
+    if (name !== 'batchId' && name !== 'sectionId') setUserSections([]);
+    setUserFilters(next);
+    setUtilityForm((current) => ({ ...current, email: '' }));
+    try {
+      if (name === 'departmentId') {
+        if (value) {
+          const coursesForDepartment = await adminService.getCourses(value);
+          setUserCourses(Array.isArray(coursesForDepartment) ? coursesForDepartment : []);
+        } else {
+          setUserCourses([]);
+        }
+      }
+      if (name === 'courseId') {
+        if (value) {
+          const branchesForCourse = await adminService.getBranches(value);
+          setUserBranches(Array.isArray(branchesForCourse) ? branchesForCourse : []);
+        } else {
+          setUserBranches([]);
+        }
+      }
+      if (name === 'role') {
+        const records = await adminService.getUserOptions(next);
+        setUserOptions(Array.isArray(records) ? records : []);
+        return;
+      }
+      if (name === 'branchId' || name === 'courseId' || name === 'departmentId') {
+        try {
+          const batches = await adminService.getAssignmentBatches(next);
+          setUserBatches(Array.isArray(batches) ? batches : []);
+        } catch (_error) {
+          setUserBatches([]);
+        }
+        next.batchId = '';
+        setUserFilters(next);
+      }
+      if (name === 'batchId' && next.role === 'STUDENT' && value) {
+        try {
+          const sections = await adminService.getAssignmentSections(value);
+          setUserSections(Array.isArray(sections) ? sections : []);
+        } catch (_error) {
+          setUserSections([]);
+        }
+      }
+      const records = await adminService.getUserOptions(next);
+      setUserOptions(Array.isArray(records) ? records : []);
+    } catch (error) {
+      setUserOptions([]);
+      setUtilityError(error?.message || 'Unable to load users for the selected filters');
+    }
+  };
+
+  const submitUtility = async (event) => {
+    event.preventDefault();
+    setUtilityLoading(true);
+    setUtilityError('');
+    setUtilitySuccess('');
+    try {
+      if (utilityAction === 'password') {
+        await adminService.changeUserPassword(utilityForm.email, utilityForm.password);
+        setUtilitySuccess('Password reset successfully.');
+      } else if (utilityAction === 'student-update') {
+        await adminService.updateStudent({ email: utilityForm.email, firstName: utilityForm.firstName, lastName: utilityForm.lastName, phone: utilityForm.phone, address: utilityForm.address, semester: Number(utilityForm.semester) });
+        setUtilitySuccess('Student profile updated successfully.');
+      } else if (utilityAction === 'student-delete') {
+        await adminService.deleteStudent(utilityForm.email);
+        setUserOptions((current) => current.filter((item) => item.email !== utilityForm.email));
+        setUtilitySuccess('Student record removed successfully.');
+      } else if (utilityAction === 'faculty-update') {
+        await adminService.updateFaculty({ email: utilityForm.email, firstName: utilityForm.firstName, lastName: utilityForm.lastName, phone: utilityForm.phone, address: utilityForm.address, specialization: utilityForm.specialization });
+        setUtilitySuccess('Faculty profile updated successfully.');
+      } else if (utilityAction === 'department') {
+        await adminService.updateDepartment({ id: Number(utilityForm.departmentId), name: utilityForm.departmentName });
+        setDepartments((current) => current.map((department) => department.id === Number(utilityForm.departmentId) ? { ...department, name: utilityForm.departmentName } : department));
+        setUtilitySuccess('Department details updated successfully.');
+      }
+    } catch (error) {
+      setUtilityError(error?.message || 'Action failed');
+    } finally {
+      setUtilityLoading(false);
+    }
   };
 
   const submitRegistration = async (event) => {
@@ -418,23 +567,28 @@ export default function AdminDashboard() {
 
       <KnowledgeUploadPanel />
 
+      <SubjectAssignmentPanel />
+
       <section>
         <div className="space-y-6">
           <div className="erp-card border-niu-green-200/60 bg-gradient-to-br from-niu-green-50/50 via-white to-amber-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 dark:border-slate-800 p-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Administrative Utilities</h3>
             <ul className="mt-4 space-y-2 text-sm">
               {[
-                { label: 'Reset user password', icon: '🔐' },
-                { label: 'Update student profile', icon: '✏️' },
-                { label: 'Remove a student record', icon: '🗑️' },
-                { label: 'Update department details', icon: '🏛️' }
+                { label: 'Reset user password', icon: '🔐', action: 'password' },
+                { label: 'Update student profile', icon: '✏️', action: 'student-update' },
+                { label: 'Update faculty profile', icon: '👨‍🏫', action: 'faculty-update' },
+                { label: 'Remove a student record', icon: '🗑️', action: 'student-delete' },
+                { label: 'Update department details', icon: '🏛️', action: 'department' }
               ].map((s) => (
-                <li key={s.label} className="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800 shadow-sm transition">
+                <li key={s.label}>
+                  <button type="button" onClick={() => openUtility(s.action)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800 shadow-sm transition">
                   <span className="text-lg">{s.icon}</span>
                   <span className="flex-1 font-medium">{s.label}</span>
                   <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -483,20 +637,15 @@ export default function AdminDashboard() {
                       value={registrationForm.courseId}
                       onChange={(event) => {
                         const selectedCourseId = event.target.value;
-                        const selectedCourse = courseOptions.find((c) => c.id === Number(selectedCourseId));
                         setRegistrationForm({
                           ...registrationForm,
                           courseId: selectedCourseId,
-                          departmentId: selectedCourse ? String(selectedCourse.departmentId) : registrationForm.departmentId,
                           branchId: ''
                         });
                       }}
                     >
                       <option value="">Choose course</option>
-                      {(registrationForm.departmentId
-                        ? courseOptions.filter((c) => c.departmentId === Number(registrationForm.departmentId))
-                        : courseOptions
-                      ).map((course) => (
+                      {courses.map((course) => (
                         <option key={course.id} value={course.id}>{course.name}</option>
                       ))}
                     </select>
@@ -511,10 +660,7 @@ export default function AdminDashboard() {
                       disabled={!registrationForm.courseId}
                     >
                       <option value="">{registrationForm.courseId ? "Choose branch" : "Choose course first"}</option>
-                      {(registrationForm.courseId
-                        ? branchOptions.filter((b) => b.courseId === Number(registrationForm.courseId))
-                        : []
-                      ).map((branch) => (
+                      {branches.map((branch) => (
                         <option key={branch.id} value={branch.id}>{branch.name}</option>
                       ))}
                     </select>
@@ -638,6 +784,63 @@ export default function AdminDashboard() {
                 {courseLoading ? <LoadingSpinner size="sm" color="text-white" /> : null}
                 {courseLoading ? 'Inserting Course...' : 'Insert Course'}
               </button>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {utilityAction ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeUtility}>
+          <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600">Admin Portal</p>
+                <h3 className="mt-1 text-xl font-black text-slate-900">
+                  {utilityAction === 'password' ? 'Reset User Password' : utilityAction === 'student-update' ? 'Update Student Profile' : utilityAction === 'faculty-update' ? 'Update Faculty Profile' : utilityAction === 'student-delete' ? 'Remove Student Record' : 'Update Department Details'}
+                </h3>
+              </div>
+              <button type="button" onClick={closeUtility} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100" aria-label="Close utility dialog">×</button>
+            </div>
+            <form className="mt-6 space-y-4" onSubmit={submitUtility}>
+              {utilityAction === 'department' ? (
+                <>
+                  <label className="erp-label">Department<select className="erp-input mt-1" required value={utilityForm.departmentId} onChange={(event) => {
+                    const department = departments.find((item) => item.id === Number(event.target.value));
+                    setUtilityForm({ ...utilityForm, departmentId: event.target.value, departmentName: department?.name || '' });
+                  }}><option value="">Select department</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} - ` : ''}{item.name}</option>)}</select></label>
+                  <label className="erp-label">Department name<input className="erp-input mt-1" required value={utilityForm.departmentName} onChange={(event) => setUtilityForm({ ...utilityForm, departmentName: event.target.value })} /></label>
+                </>
+              ) : (
+                <>
+                  <label className="erp-label">User type<select className="erp-input mt-1" value={userFilters.role} onChange={(event) => updateUserFilter('role', event.target.value)}><option value="STUDENT">Student</option><option value="FACULTY">Faculty</option><option value="ADMIN">Admin</option></select></label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="erp-label">Department<select className="erp-input mt-1" value={userFilters.departmentId} onChange={(event) => updateUserFilter('departmentId', event.target.value)}><option value="">All departments</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                    <label className="erp-label">Course<select className="erp-input mt-1" value={userFilters.courseId} onChange={(event) => updateUserFilter('courseId', event.target.value)} disabled={!userFilters.departmentId}><option value="">{userFilters.departmentId ? 'All courses' : 'Select department first'}</option>{userCourses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                    <label className="erp-label">Branch<select className="erp-input mt-1" value={userFilters.branchId} onChange={(event) => updateUserFilter('branchId', event.target.value)} disabled={!userFilters.courseId}><option value="">{userFilters.courseId ? 'All branches' : 'Select course first'}</option>{userBranches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                    <label className="erp-label">Batch<select className="erp-input mt-1" value={userFilters.batchId} onChange={(event) => updateUserFilter('batchId', event.target.value)}><option value="">All batches</option>{userBatches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                    {userFilters.role === 'STUDENT' ? <label className="erp-label">Section<select className="erp-input mt-1" value={userFilters.sectionId} onChange={(event) => updateUserFilter('sectionId', event.target.value)} disabled={!userFilters.batchId}><option value="">All sections</option>{userSections.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : null}
+                  </div>
+                  <label className="erp-label">Select user<select className="erp-input mt-1" required value={utilityForm.email} onChange={(event) => selectStudent(event.target.value)} disabled={utilityLoading}><option value="">Select user</option>{userOptions.map((item) => <option key={item.email} value={item.email}>{item.name} - {item.email} ({item.role})</option>)}</select></label>
+                  {utilityAction === 'password' ? <label className="erp-label">New password<input className="erp-input mt-1" required minLength={4} type="password" value={utilityForm.password} onChange={(event) => setUtilityForm({ ...utilityForm, password: event.target.value })} /></label> : null}
+                  {utilityAction === 'student-update' ? <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="erp-label">First name<input className="erp-input mt-1" required value={utilityForm.firstName} onChange={(event) => setUtilityForm({ ...utilityForm, firstName: event.target.value })} /></label>
+                    <label className="erp-label">Last name<input className="erp-input mt-1" value={utilityForm.lastName} onChange={(event) => setUtilityForm({ ...utilityForm, lastName: event.target.value })} /></label>
+                    <label className="erp-label">Phone<input className="erp-input mt-1" required value={utilityForm.phone} onChange={(event) => setUtilityForm({ ...utilityForm, phone: event.target.value })} /></label>
+                    <label className="erp-label">Semester<input className="erp-input mt-1" required type="number" min="1" value={utilityForm.semester} onChange={(event) => setUtilityForm({ ...utilityForm, semester: event.target.value })} /></label>
+                    <label className="erp-label sm:col-span-2">Address<input className="erp-input mt-1" required value={utilityForm.address} onChange={(event) => setUtilityForm({ ...utilityForm, address: event.target.value })} /></label>
+                  </div> : null}
+                  {utilityAction === 'faculty-update' ? <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="erp-label sm:col-span-2">Name<input className="erp-input mt-1" required value={utilityForm.firstName} onChange={(event) => setUtilityForm({ ...utilityForm, firstName: event.target.value })} /></label>
+                    <label className="erp-label">Phone<input className="erp-input mt-1" required value={utilityForm.phone} onChange={(event) => setUtilityForm({ ...utilityForm, phone: event.target.value })} /></label>
+                    <label className="erp-label sm:col-span-2">Address<input className="erp-input mt-1" required value={utilityForm.address} onChange={(event) => setUtilityForm({ ...utilityForm, address: event.target.value })} /></label>
+                    <label className="erp-label sm:col-span-2">Specialization<input className="erp-input mt-1" value={utilityForm.specialization} onChange={(event) => setUtilityForm({ ...utilityForm, specialization: event.target.value })} /></label>
+                  </div> : null}
+                  {utilityAction === 'student-delete' ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">This permanently removes the selected student record.</p> : null}
+                </>
+              )}
+              {utilityError ? <ErrorMessage message={utilityError} /> : null}
+              {utilitySuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{utilitySuccess}</p> : null}
+              <button type="submit" className="erp-btn-primary w-full" disabled={utilityLoading}>{utilityLoading ? 'Working...' : utilityAction === 'student-delete' ? 'Remove Student' : 'Save Changes'}</button>
             </form>
           </section>
         </div>

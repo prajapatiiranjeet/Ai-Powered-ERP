@@ -25,15 +25,17 @@ public class DepartmentService {
 
 
     public  String setdepartment(DepartmentDTO dto) {
-        Department department = new Department();
+        Department department = dto.getId() == null
+                ? new Department()
+                : departmentRepository.findById(dto.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found"));
         department.setName(dto.getName());
-        String cleanName = dto.getName().replaceAll("\\s+", "").toUpperCase();
-        String prefix = cleanName.length() >= 4 ? cleanName.substring(0, 4) : cleanName;
-        Random random = new Random();
-        int randomNumber = 1000 + random.nextInt(9000);
-        String generatedCode = prefix + "-" + randomNumber;
-        department.setCode(generatedCode);
+        if (department.getCode() == null || department.getCode().isBlank()) {
+            String cleanName = dto.getName().replaceAll("\\s+", "").toUpperCase();
+            String prefix = cleanName.length() >= 4 ? cleanName.substring(0, 4) : cleanName;
+            department.setCode(prefix + "-" + (1000 + new Random().nextInt(9000)));
+        }
         departmentRepository.save(department);
-        return "new department is setuped";
+        return dto.getId() == null ? "Department created successfully" : "Department updated successfully";
     }
 }

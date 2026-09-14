@@ -1,10 +1,12 @@
 package com.chaiorcode.mycode.Controller;
 
 import com.chaiorcode.mycode.DTO.CreateUserDto;
+import com.chaiorcode.mycode.DTO.AttendanceSummaryDTO;
 import com.chaiorcode.mycode.DTO.StudentDTO;
 import com.chaiorcode.mycode.DTO.StudentProfileDTO;
 import com.chaiorcode.mycode.Entity.Student;
 import com.chaiorcode.mycode.Service.AuthService;
+import com.chaiorcode.mycode.Service.AttendanceService;
 import com.chaiorcode.mycode.Service.CustomUserDetailsService;
 import com.chaiorcode.mycode.Service.RetrievalService;
 import com.chaiorcode.mycode.Service.StudentService;
@@ -29,6 +31,7 @@ public class StudentController {
     private  final AuthService authService;
     private final RetrievalService retrievalService;
     private final ChatClient chatClient;
+    private final AttendanceService attendanceService;
 
 
 
@@ -103,5 +106,11 @@ Answer:
         String email = authentication.getName();
         StudentProfileDTO dto = studentService.viewprofilebyEmail(email);
         return ResponseEntity.ok(dto);
+    }
+
+    // Students can read only their own subject-wise attendance summary from the JWT identity.
+    @GetMapping("/attendance")
+    public ResponseEntity<List<AttendanceSummaryDTO>> attendance(Authentication authentication) {
+        return ResponseEntity.ok(attendanceService.getStudentSummary(authentication.getName()));
     }
 }

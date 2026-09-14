@@ -8,5 +8,6 @@ import lombok.Setter;
 public class DepartmentDTO {
 
     private String name; // e.g., Computer Science
+    private Long id;
     private String code;
 }

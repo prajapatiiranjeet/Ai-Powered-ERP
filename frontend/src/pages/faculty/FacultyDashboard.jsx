@@ -1,5 +1,6 @@
 import DashboardCard from '../../components/common/DashboardCard.jsx';
 import QuickActionCard from '../../components/common/QuickActionCard.jsx';
+import FacultyAttendancePanel from '../../components/faculty/FacultyAttendancePanel.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { facultyService } from '../../services/facultyService.js';
 import { useEffect, useState } from 'react';
@@ -210,6 +211,8 @@ export default function FacultyDashboard() {
           </div>
         </div>
       </section>
+      {/* Faculty attendance marking is kept on the dashboard for the daily workflow. */}
+      <FacultyAttendancePanel />
     </div>
   );
 }

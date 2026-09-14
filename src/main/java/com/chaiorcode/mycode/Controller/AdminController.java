@@ -1,7 +1,11 @@
     package com.chaiorcode.mycode.Controller;
 
     import com.chaiorcode.mycode.DTO.*;
-    import com.chaiorcode.mycode.Entity.Student;
+    import com.chaiorcode.mycode.Entity.*;
+    import com.chaiorcode.mycode.Repo.CourseSemesterBranchSubjectRepository;
+    import com.chaiorcode.mycode.Repo.FacultyRepo;
+    import com.chaiorcode.mycode.Repo.SectionRepository;
+    import com.chaiorcode.mycode.Repo.SubjectOfferingRepository;
     import com.chaiorcode.mycode.Service.*;
     import lombok.RequiredArgsConstructor;
     import org.apache.poi.xwpf.usermodel.XWPFTableRow;
@@ -27,6 +31,7 @@
     import java.util.List;
     import java.util.Map;
     import java.util.stream.Collectors;
+    import jakarta.validation.Valid;
 
 
     @RestController
@@ -38,12 +43,16 @@
         private  final AuthService authService;
         private final DepartmentService departmentService;
         private final CourseService courseService;
+        private final SubjectAssignmentService subjectAssignmentService;
+        private final SubjectOfferingService subjectOfferingService;
 
         @Autowired
         public ChunkingService chunkingService;
 
         @Autowired
         private VectorStore vectorStore;
+        
+        private SectionRepository sectionRepository;
 
         @Autowired
         private EmbeddingModel embeddingModel;
@@ -51,6 +60,24 @@
         private final ChatClient chatClient;
 
         private final RetrievalService retrievalService;
+        @Autowired
+        private CourseSemesterBranchSubjectRepository courseSemesterBranchSubjectRepository;
+        @Autowired
+        private FacultyRepo facultyRepo;
+        @Autowired
+        private SubjectOfferingRepository subjectOfferingRepository;
+
+
+        @PostMapping("/assign-subject-to-faculty")
+        public ResponseEntity<SubjectOfferingDTO> assignSubjectToFaculty(
+            @Valid @RequestBody AssignSubjectRequest request) {
+            SubjectOffering offering = subjectAssignmentService.assign(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(subjectOfferingService.mapToDTO(offering));
+        }
+
+
+
 
 
         @PostMapping("/ask-to-sherpal")
@@ -77,6 +104,8 @@
             =========================
              {{userName}}: %s
              {{currentDateTime}}: %s
+             {{}}
+             
 
             Use the user's name naturally when appropriate.
             Do not unnecessarily repeat the user's name in every response.
@@ -199,6 +228,9 @@
                     question
             );
 
+
+
+
             // Generate answer
             String answer = chatClient.prompt()
                     .system("""
@@ -259,9 +291,27 @@
                 List<Document> cleanedDocuments = documents.stream()
                         .map(doc -> {
 
+                            String prompt = """
+                          You are an expert document formatting assistant.
 
+                          Clean the following extracted document.
+
+                           Rules:
+                           - Do not summarize.
+                           - Do not change meaning.
+                           - Preserve headings.
+                           - Preserve tables.
+                           - Remove broken line breaks.
+                           - Remove repeated headers and footers.
+                           - Return only the cleaned text.
+
+                           Document:
+
+                           %s
+                           """.formatted(doc.getText());
 
                             String cleanedText = chatClient.prompt()
+                                    .user(prompt)
                                     .call()
                                     .content();
 
@@ -337,9 +387,7 @@
 
         @PutMapping("/student-update")
         public ResponseEntity<Student> updateStudent(@RequestBody StudentDTO studentDTO, Authentication authentication) {
-
-            String email = authentication.getName();
-            return ResponseEntity.status(HttpStatus.OK).body(studentService.updateStudent(email , studentDTO));
+            return ResponseEntity.status(HttpStatus.OK).body(studentService.updateStudentByEmail(studentDTO.getEmail(), studentDTO));
         }
 
         @PutMapping("/change-password")
@@ -353,6 +401,29 @@
         @GetMapping("/get-all-students")
         public List<String> getallStudent(){
             return studentService.Studentgetall();
+        }
+
+        @GetMapping("/get-student-records")
+        public List<StudentDTO> getStudentRecords() {
+            return studentService.getAdminStudentRecords();
+        }
+
+        @GetMapping("/user-options")
+        public List<AdminUserOptionDTO> getUserOptions(
+                @RequestParam(required = false) String role,
+                @RequestParam(required = false) Long departmentId,
+                @RequestParam(required = false) Long courseId,
+                @RequestParam(required = false) Long branchId,
+                @RequestParam(required = false) Long batchId,
+                @RequestParam(required = false) Long sectionId) {
+            com.chaiorcode.mycode.Enum.Role parsedRole = role == null || role.isBlank()
+                    ? null : com.chaiorcode.mycode.Enum.Role.valueOf(role);
+            return authService.getAdminUserOptions(parsedRole, departmentId, courseId, branchId, batchId, sectionId);
+        }
+
+        @PutMapping("/faculty-update")
+        public ResponseEntity<Faculty> updateFaculty(@RequestBody AdminProfileUpdateRequest request) {
+            return ResponseEntity.ok(facultyService.updateAdminFaculty(request));
         }
 
         @GetMapping("/get-faculty-count")
@@ -386,10 +457,47 @@
                 return courseService.countCourses();
             }
 
+        @GetMapping("/subject-assignment/faculty")
+        public List<LookupOptionDTO> getAssignmentFaculty(
+                @RequestParam(required = false) Long departmentId,
+                @RequestParam(required = false) Long courseId,
+                @RequestParam(required = false) Long branchId,
+                @RequestParam(required = false) Long batchId) {
+            return subjectAssignmentService.getFacultyOptions(departmentId, courseId, branchId, batchId);
+        }
+
+        @GetMapping("/subject-assignment/subjects")
+        public List<SubjectAssignmentOptionDTO> getAssignmentSubjects(
+                @RequestParam(required = false) Long courseId,
+                @RequestParam(required = false) Long branchId) {
+            return subjectAssignmentService.getSubjectOptions(courseId, branchId);
+        }
+
+        @GetMapping("/subject-assignment/sections")
+        public List<LookupOptionDTO> getAssignmentSections(@RequestParam(required = false) Long batchId) {
+            return subjectAssignmentService.getSectionOptions(batchId);
+        }
+
+        @GetMapping("/subject-assignment/batches")
+        public List<LookupOptionDTO> getAssignmentBatches(
+                @RequestParam(required = false) Long departmentId,
+                @RequestParam(required = false) Long courseId,
+                @RequestParam(required = false) Long branchId) {
+            return subjectAssignmentService.getBatchOptions(departmentId, courseId, branchId);
+        }
+
+        @PostMapping("/subject-assignment")
+        public ResponseEntity<SubjectOfferingDTO> assignSubject(
+                @Valid @RequestBody AssignSubjectRequest request) {
+            SubjectOffering offering = subjectAssignmentService.assign(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(subjectOfferingService.mapToDTO(offering));
+        }
+
         @DeleteMapping("/student-delete")
         public ResponseEntity<String> deleteStudent(@RequestBody StudentDTO studentDTO, Authentication authentication) {
             String email = studentDTO.getEmail();
-            return ResponseEntity.status(HttpStatus.OK).body(studentService.deleteStudent(email));
+            return ResponseEntity.status(HttpStatus.OK).body(studentService.deleteStudent(studentDTO.getEmail()));
         }
 
 //        @GetMapping("/get-all-faculty")

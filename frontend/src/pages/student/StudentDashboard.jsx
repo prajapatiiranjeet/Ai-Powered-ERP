@@ -3,6 +3,7 @@ import DashboardCard from '../../components/common/DashboardCard.jsx';
 import QuickActionCard from '../../components/common/QuickActionCard.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import ErrorMessage from '../../components/common/ErrorMessage.jsx';
+import StudentAttendancePanel from '../../components/student/StudentAttendancePanel.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { studentService } from '../../services/studentService.js';
 
@@ -248,6 +249,8 @@ export default function StudentDashboard() {
           </div>
         </div>
       </section>
+      {/* Students see the calculated subject-wise attendance below their profile. */}
+      <StudentAttendancePanel />
     </div>
   );
 }

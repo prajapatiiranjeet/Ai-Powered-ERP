@@ -1,8 +1,11 @@
 package com.chaiorcode.mycode.Service;
 
 import com.chaiorcode.mycode.DTO.FacultyRequestDTO;
+import com.chaiorcode.mycode.DTO.AdminProfileUpdateRequest;
 import com.chaiorcode.mycode.DTO.FacultyProfileDTO;
+import com.chaiorcode.mycode.DTO.SubjectOfferingDTO;
 import com.chaiorcode.mycode.Entity.Faculty;
+import com.chaiorcode.mycode.Entity.SubjectOffering;
 import com.chaiorcode.mycode.Enum.Role;
 import com.chaiorcode.mycode.Repo.FacultyRepo;
 import com.chaiorcode.mycode.Repo.UserRepo;
@@ -150,4 +153,28 @@ public class FacultyService {
         return facultyRepo.save(faculty);
     }
 
+    public Faculty updateAdminFaculty(AdminProfileUpdateRequest request) {
+        Faculty faculty = facultyRepo.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Faculty not found"));
+        if (request.getFirstName() != null) faculty.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) faculty.setLastName(request.getLastName());
+        if (request.getPhone() != null) faculty.setPhone(request.getPhone());
+        if (request.getAddress() != null) faculty.setAddress(request.getAddress());
+        if (request.getSpecialization() != null) faculty.setSpecialization(request.getSpecialization());
+        return facultyRepo.save(faculty);
+    }
+
+    public Long getfacyltyidbyemail(String email) {
+        Long id = facultyRepo.findIdByEmail(email);
+        return id;
+    }
+
+    private SubjectOfferingDTO mapToDTO(SubjectOffering offering) {
+        SubjectOfferingDTO dto = new SubjectOfferingDTO();
+        dto.setOfferingId(offering.getId());
+        dto.setSubjectCode(offering.getCsbs().getSubject().getCode());
+        dto.setSubjectName(offering.getCsbs().getSubject().getName());
+        dto.setSectionName(offering.getSection().getSectionName());
+        return dto;
+    }
 }

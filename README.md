@@ -371,3 +371,28 @@ git push origin main
 
 ---
 *Built with ❤️ for Noida International University.*
+
+## Current Implementation Update
+
+The current development update includes the following delivered functionality:
+
+- **Admin academic management**: department, course, branch, section, batch, subject, and faculty lookup flows, plus subject-to-faculty assignment.
+- **Admin user management**: registration and update flows for administrators, faculty members, and students, with profile and password operations.
+- **Faculty attendance**: assigned-subject retrieval, attendance roster loading, attendance marking, profile updates, and password changes.
+- **Student academic services**: profile updates, password changes, attendance retrieval, and role-specific dashboard data.
+- **Frontend dashboard updates**: refreshed Admin, Faculty, and Student dashboards with dedicated services and reusable role-specific components.
+- **RAG and document workflows**: protected SHERPAL access remains available for all roles, while Admin users can upload documents for PGVector indexing with Unstructured table-aware extraction.
+- **Developer assets**: Postman collections, environments, flows, mocks, specifications, attendance issue analysis, ERP backup data, and a local pgvector source/build bundle are included for development and API verification.
+
+### Recent API Groups
+
+- `POST /auth/login`
+- `POST /admin/subject-assignment` and related academic lookup endpoints under `/admin`
+- `POST /admin/upload-documents` and `POST /admin/ask-to-sherpal`
+- `GET /faculty/my-subjects`, `GET /faculty/attendance/roster`, and `POST /faculty/attendance`
+- `POST /faculty/ask-to-sherpal` and profile/password endpoints under `/faculty`
+- `GET /students/attendance`, `POST /students/ask-to-sherpal`, and profile/password endpoints under `/students`
+
+### Configuration Note
+
+Before sharing or deploying this project, move database credentials, JWT secrets, and local AI service URLs out of `src/main/resources/application.properties` and into environment variables or a local, ignored configuration file. The checked-in values are for local development only and must not be reused in production.
