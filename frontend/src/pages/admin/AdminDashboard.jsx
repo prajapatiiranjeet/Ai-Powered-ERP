@@ -8,6 +8,17 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { adminService } from '../../services/adminService.js';
 import SubjectAssignmentPanel from '../../components/admin/SubjectAssignmentPanel.jsx';
 
+function UtilityIcon({ name }) {
+  const paths = {
+    security: <><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+    faculty: <><circle cx="9" cy="8" r="3" /><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 5h5M18.5 2.5v5" /></>,
+    remove: <><path d="M5 7h14M10 7V4h4v3m-7 0 1 13h8l1-13M10 11v5m4-5v5" /></>,
+    departments: <><path d="M3 21h18M5 21V7l7-4 7 4v14M9 11h1m4 0h1m-6 4h1m4 0h1" /></>
+  };
+  return <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
+
 const departmentOptions = [
   { id: 1, code: 'SET', name: 'School of Engineering and Technology' },
   { id: 2, code: 'SCA', name: 'School of Computer Applications' },
@@ -402,38 +413,32 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Welcome banner */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-5">
+      {/* Welcome banner — slim section header style */}
+      <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 md:px-5 md:py-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {today}
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
-              Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'} 👋
+            <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white md:text-xl">
+              Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-              Noida International University · Administrative Command Center
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> System Online
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
-              Administrator
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Administrator access
             </span>
           </div>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards — Institution overview */}
       <section>
-        <h3 className="mb-3 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-          Institution Overview
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          Institution overview
         </h3>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="erp-stat-card border-slate-200 animate-pulse">
@@ -448,7 +453,7 @@ export default function AdminDashboard() {
                 title="Total Students"
                 value={students.length}
                 accent="purple"
-                description="Registered in NIU portal"
+                description="Registered in the university portal"
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -500,101 +505,106 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* Quick Actions */}
-      <section>
-        <h3 className="mb-3 text-xs font-extrabold uppercase tracking-wider text-slate-500">
-          Management Actions
-        </h3>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <QuickActionCard
-            accent="purple"
-            title="Register Student"
-            description="Enroll a new student"
-            onClick={() => openRegistration('STUDENT')}
-            icon={
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-            }
-          />
-          <QuickActionCard
-            accent="teal"
-            title="Register Faculty"
-            description="Add a new faculty member"
-            onClick={() => openRegistration('FACULTY')}
-            icon={
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M19 8v6" />
-                <path d="M22 11h-6" />
-              </svg>
-            }
-          />
-          <QuickActionCard
-            accent="blue"
-            title="Add Department"
-            description="Create a new department"
-            onClick={openDepartmentModal}
-            icon={
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 21h18" />
-                <path d="M5 21V7l8-4v18" />
-                <path d="M19 21V11l-6-4" />
-                <line x1="12" y1="11" x2="12" y2="17" />
-                <line x1="9" y1="14" x2="15" y2="14" />
-              </svg>
-            }
-          />
-          <QuickActionCard
-            accent="indigo"
-            title="Insert Course"
-            description="Add a new course offering"
-            onClick={openCourseModal}
-            icon={
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                <path d="M9 7h6" />
-                <path d="M9 11h4" />
-              </svg>
-            }
-          />
-        </div>
-      </section>
+      {/* 12-col grouped row: Management actions (7) + Administrative utilities (5) */}
+      <div className="grid gap-5 lg:grid-cols-12">
+        {/* Management actions — 2×2 compact grid */}
+        <section className="lg:col-span-7">
+          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Management actions
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <QuickActionCard
+              accent="purple"
+              title="Register Student"
+              description="Enroll a new student"
+              onClick={() => openRegistration('STUDENT')}
+              icon={
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+              }
+            />
+            <QuickActionCard
+              accent="teal"
+              title="Register Faculty"
+              description="Add a new faculty member"
+              onClick={() => openRegistration('FACULTY')}
+              icon={
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M19 8v6" />
+                  <path d="M22 11h-6" />
+                </svg>
+              }
+            />
+            <QuickActionCard
+              accent="blue"
+              title="Add Department"
+              description="Create a new department"
+              onClick={openDepartmentModal}
+              icon={
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18" />
+                  <path d="M5 21V7l8-4v18" />
+                  <path d="M19 21V11l-6-4" />
+                  <line x1="12" y1="11" x2="12" y2="17" />
+                  <line x1="9" y1="14" x2="15" y2="14" />
+                </svg>
+              }
+            />
+            <QuickActionCard
+              accent="indigo"
+              title="Insert Course"
+              description="Add a new course offering"
+              onClick={openCourseModal}
+              icon={
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                  <path d="M9 7h6" />
+                  <path d="M9 11h4" />
+                </svg>
+              }
+            />
+          </div>
+        </section>
 
-      <KnowledgeUploadPanel />
-
-      <SubjectAssignmentPanel />
-
-      <section>
-        <div className="space-y-6">
-          <div className="erp-card border-niu-green-200/60 bg-gradient-to-br from-niu-green-50/50 via-white to-amber-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 dark:border-slate-800 p-6">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Administrative Utilities</h3>
-            <ul className="mt-4 space-y-2 text-sm">
+        {/* Administrative utilities — compact minimalist list */}
+        <section className="lg:col-span-5">
+          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Administrative utilities
+          </h3>
+          <div className="erp-card border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900 p-4 md:p-5">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Quick utilities</h3>
+            <ul className="mt-3 space-y-1.5 text-sm">
               {[
-                { label: 'Reset user password', icon: '🔐', action: 'password' },
-                { label: 'Update student profile', icon: '✏️', action: 'student-update' },
-                { label: 'Update faculty profile', icon: '👨‍🏫', action: 'faculty-update' },
-                { label: 'Remove a student record', icon: '🗑️', action: 'student-delete' },
-                { label: 'Update department details', icon: '🏛️', action: 'department' }
+                { label: 'Reset user password', icon: 'security', action: 'password' },
+                { label: 'Update student profile', icon: 'profile', action: 'student-update' },
+                { label: 'Update faculty profile', icon: 'faculty', action: 'faculty-update' },
+                { label: 'Remove a student record', icon: 'remove', action: 'student-delete' },
+                { label: 'Update department details', icon: 'departments', action: 'department' }
               ].map((s) => (
                 <li key={s.label}>
-                  <button type="button" onClick={() => openUtility(s.action)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800 shadow-sm transition">
-                  <span className="text-lg">{s.icon}</span>
-                  <span className="flex-1 font-medium">{s.label}</span>
-                  <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                  </svg>
+                  <button type="button" onClick={() => openUtility(s.action)} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800 transition">
+                    <span className="text-niu-green-700 dark:text-emerald-400"><UtilityIcon name={s.icon} /></span>
+                    <span className="flex-1 font-medium text-[13px]">{s.label}</span>
+                    <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
                   </button>
                 </li>
               ))}
             </ul>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <KnowledgeUploadPanel />
+
+      <SubjectAssignmentPanel />
 
       {registrationRole ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeRegistration}>
@@ -692,7 +702,7 @@ export default function AdminDashboard() {
                 </div>
               ) : null}
               {registrationError ? <ErrorMessage message={registrationError} /> : null}
-              {registrationSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{registrationSuccess}</p> : null}
+              {registrationSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:text-emerald-300">{registrationSuccess}</p> : null}
               <button type="submit" className="erp-btn-primary w-full" disabled={registrationLoading}>{registrationLoading ? <LoadingSpinner size="sm" color="text-white" /> : null}{registrationLoading ? 'Registering...' : `Register ${registrationRole === 'STUDENT' ? 'Student' : registrationRole === 'ADMIN' ? 'Admin' : 'Faculty'}`}</button>
             </form>
           </section>
@@ -701,13 +711,13 @@ export default function AdminDashboard() {
 
       {showDepartmentModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeDepartmentModal}>
-          <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="department-title">
+          <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="department-title">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600">Admin Portal</p>
-                <h3 id="department-title" className="mt-1 text-xl font-black text-slate-900">Add New Department</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600 dark:text-emerald-400">Admin Portal</p>
+                <h3 id="department-title" className="mt-1 text-xl font-black text-slate-900 dark:text-white">Add New Department</h3>
               </div>
-              <button type="button" onClick={closeDepartmentModal} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close department dialog">×</button>
+              <button type="button" onClick={closeDepartmentModal} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close department dialog">×</button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={submitDepartment}>
               <label className="erp-label">
@@ -721,7 +731,7 @@ export default function AdminDashboard() {
                 />
               </label>
               {departmentError ? <ErrorMessage message={departmentError} /> : null}
-              {departmentSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{departmentSuccess}</p> : null}
+              {departmentSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:text-emerald-300">{departmentSuccess}</p> : null}
               <button type="submit" className="erp-btn-primary w-full" disabled={departmentLoading}>
                 {departmentLoading ? <LoadingSpinner size="sm" color="text-white" /> : null}
                 {departmentLoading ? 'Adding Department...' : 'Create Department'}
@@ -733,13 +743,13 @@ export default function AdminDashboard() {
 
       {showCourseModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeCourseModal}>
-          <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="course-title">
+          <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="course-title">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600">Admin Portal</p>
-                <h3 id="course-title" className="mt-1 text-xl font-black text-slate-900">Insert New Course</h3>
+                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600 dark:text-emerald-400">Admin Portal</p>
+                <h3 id="course-title" className="mt-1 text-xl font-black text-slate-900 dark:text-white">Insert New Course</h3>
               </div>
-              <button type="button" onClick={closeCourseModal} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close course dialog">×</button>
+              <button type="button" onClick={closeCourseModal} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close course dialog">×</button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={submitCourse}>
               <label className="erp-label">
@@ -779,7 +789,7 @@ export default function AdminDashboard() {
                 />
               </label>
               {courseError ? <ErrorMessage message={courseError} /> : null}
-              {courseSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{courseSuccess}</p> : null}
+              {courseSuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:text-emerald-300">{courseSuccess}</p> : null}
               <button type="submit" className="erp-btn-primary w-full" disabled={courseLoading}>
                 {courseLoading ? <LoadingSpinner size="sm" color="text-white" /> : null}
                 {courseLoading ? 'Inserting Course...' : 'Insert Course'}
@@ -791,15 +801,15 @@ export default function AdminDashboard() {
 
       {utilityAction ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={closeUtility}>
-          <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+          <section className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600">Admin Portal</p>
-                <h3 className="mt-1 text-xl font-black text-slate-900">
+                <p className="text-xs font-bold uppercase tracking-wider text-niu-green-600 dark:text-emerald-400">Admin Portal</p>
+                <h3 className="mt-1 text-xl font-black text-slate-900 dark:text-white">
                   {utilityAction === 'password' ? 'Reset User Password' : utilityAction === 'student-update' ? 'Update Student Profile' : utilityAction === 'faculty-update' ? 'Update Faculty Profile' : utilityAction === 'student-delete' ? 'Remove Student Record' : 'Update Department Details'}
                 </h3>
               </div>
-              <button type="button" onClick={closeUtility} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100" aria-label="Close utility dialog">×</button>
+              <button type="button" onClick={closeUtility} className="rounded-lg px-2 py-1 text-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="Close utility dialog">×</button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={submitUtility}>
               {utilityAction === 'department' ? (
@@ -835,11 +845,11 @@ export default function AdminDashboard() {
                     <label className="erp-label sm:col-span-2">Address<input className="erp-input mt-1" required value={utilityForm.address} onChange={(event) => setUtilityForm({ ...utilityForm, address: event.target.value })} /></label>
                     <label className="erp-label sm:col-span-2">Specialization<input className="erp-input mt-1" value={utilityForm.specialization} onChange={(event) => setUtilityForm({ ...utilityForm, specialization: event.target.value })} /></label>
                   </div> : null}
-                  {utilityAction === 'student-delete' ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">This permanently removes the selected student record.</p> : null}
+                  {utilityAction === 'student-delete' ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">This permanently removes the selected student record.</p> : null}
                 </>
               )}
               {utilityError ? <ErrorMessage message={utilityError} /> : null}
-              {utilitySuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{utilitySuccess}</p> : null}
+              {utilitySuccess ? <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:text-emerald-300">{utilitySuccess}</p> : null}
               <button type="submit" className="erp-btn-primary w-full" disabled={utilityLoading}>{utilityLoading ? 'Working...' : utilityAction === 'student-delete' ? 'Remove Student' : 'Save Changes'}</button>
             </form>
           </section>

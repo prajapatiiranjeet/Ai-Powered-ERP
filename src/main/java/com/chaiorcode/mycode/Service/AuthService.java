@@ -191,6 +191,16 @@ public class AuthService {
 
     }
 
+    public String changeOwnPassword(String email, String currentPassword, String newPassword) {
+        User user = userRepo.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
+        return "Password updated successfully";
+    }
+
     public String changePasswordForAdmin(String email, String password) {
         CreateUserDto request = new CreateUserDto();
         request.setEmail(email);

@@ -10,27 +10,27 @@ export default {
       colors: {
         niu: {
           green: {
-            50: '#e6f5ec',
-            100: '#c3e8d2',
-            200: '#94d3ad',
-            300: '#5ebb82',
-            400: '#2fa05c',
-            500: '#006837', // NIU Primary Green
-            600: '#00542c',
-            700: '#004222',
-            800: '#00331a',
-            900: '#002210',
+            50: '#f0f4ec',
+            100: '#dce8d3',
+            200: '#b9d09f',
+            300: '#94b877',
+            400: '#6f934f',
+            500: '#486c2f',
+            600: '#3d5b29',
+            700: '#334b24',
+            800: '#293d20',
+            900: '#1f301a',
           },
           gold: {
-            50: '#fffbeb',
-            100: '#fef3c7',
-            200: '#fde68a',
-            300: '#fcd34d',
-            400: '#facc15',
-            500: '#eab308', // NIU Warm Gold
-            600: '#d97706',
-            700: '#b45309',
-            800: '#92400e',
+            50: '#fffbea',
+            100: '#f8efbd',
+            200: '#f1e5a1',
+            300: '#ead88a',
+            400: '#e0c966',
+            500: '#f1e5a1',
+            600: '#d9c77e',
+            700: '#b39b50',
+            800: '#8b773a',
           },
           dark: {
             900: '#080c0a',
@@ -40,19 +40,19 @@ export default {
         },
         role: {
           admin: {
-            DEFAULT: '#006837',
-            light: '#e6f5ec',
-            dark: '#004222'
+            DEFAULT: '#8b2626',
+            light: '#f8eaea',
+            dark: '#681d1d'
           },
           student: {
-            DEFAULT: '#2563eb',
-            light: '#dbeafe',
-            dark: '#1d4ed8'
+            DEFAULT: '#ef6905',
+            light: '#fff0e5',
+            dark: '#bd4e04'
           },
           faculty: {
-            DEFAULT: '#0d9488',
-            light: '#ccfbf1',
-            dark: '#0f766e'
+            DEFAULT: '#486c2f',
+            light: '#f0f4ec',
+            dark: '#334b24'
           }
         }
       },

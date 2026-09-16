@@ -44,27 +44,21 @@ export default function FacultyDashboard() {
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <div className="space-y-6">
-      {/* Welcome banner */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-5">
+      {/* Welcome banner — slim section header style */}
+      <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 md:px-5 md:py-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {today}
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
-              Welcome, Prof. {displayName.split(' ')[0]} 👨‍🏫
+            <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white md:text-xl">
+              Welcome, Prof. {displayName.split(' ')[0]}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-              Noida International University · Faculty Portal
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Academic Session Active
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
-              Faculty
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Faculty access
             </span>
           </div>
         </div>
@@ -72,61 +66,69 @@ export default function FacultyDashboard() {
 
       {/* Stat cards */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
           Faculty Overview
         </h3>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <DashboardCard
-            title="Faculty Info"
-            value={displayName}
-            accent="teal"
-            description={email}
-            icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            }
-          />
-          <DashboardCard
-            title="Employee ID"
-            value={employeeId}
-            accent="emerald"
-            description="Your college employee identifier"
-            icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
-                <circle cx="9" cy="10" r="2" />
-                <path d="M15 8h2M15 12h2M7 16h10" />
-              </svg>
-            }
-          />
-          <DashboardCard
-            title="Designation"
-            value={designation}
-            accent="blue"
-            description="Current designation"
-            icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z" />
-              </svg>
-            }
-          />
-          <DashboardCard
-            title="Department"
-            value={department}
-            accent="indigo"
-            description="Academic department"
-            icon={
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 21h18" />
-                <path d="M5 21V7l8-4v18" />
-                <path d="M19 21V11l-6-4" />
-              </svg>
-            }
-          />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="min-w-0">
+            <DashboardCard
+              title="Faculty Info"
+              value={displayName}
+              accent="teal"
+              description={email}
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              }
+            />
+          </div>
+          <div className="min-w-0">
+            <DashboardCard
+              title="Employee ID"
+              value={employeeId}
+              accent="emerald"
+              description="Your college employee identifier"
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                  <circle cx="9" cy="10" r="2" />
+                  <path d="M15 8h2M15 12h2M7 16h10" />
+                </svg>
+              }
+            />
+          </div>
+          <div className="min-w-0">
+            <DashboardCard
+              title="Designation"
+              value={designation}
+              accent="blue"
+              description="Current designation"
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l3 6 6 1-4.5 4.5 1 6.5L12 17l-5.5 3 1-6.5L3 9l6-1z" />
+                </svg>
+              }
+            />
+          </div>
+          <div className="min-w-0">
+            <DashboardCard
+              title="Department"
+              value={department}
+              accent="indigo"
+              description="Academic department"
+              icon={
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18" />
+                  <path d="M5 21V7l8-4v18" />
+                  <path d="M19 21V11l-6-4" />
+                </svg>
+              }
+            />
+          </div>
         </div>
       </section>
 
@@ -145,34 +147,37 @@ export default function FacultyDashboard() {
               { label: 'Email ID', value: email, accent: true },
               { label: 'Employee ID', value: employeeId, accent: true },
               { label: 'Designation', value: designation },
-              { label: 'Department', value: department },
+              { label: 'Department', value: department, long: true },
               { label: 'Specialization', value: specialization },
               { label: 'Highest Qualification', value: qualification },
               { label: 'Joining Date', value: joiningDate },
-              { label: 'Phone / Address', value: `${phone} / ${address}` }
+              { label: 'Phone / Address', value: `${phone} / ${address}`, long: true }
             ].map((f) => (
               <div
                 key={f.label}
-                className={`rounded-lg border px-4 py-3 ${
+                className={`min-w-0 rounded-lg border px-4 py-3 ${
                   f.dashed ? 'border-dashed border-slate-300 dark:border-slate-700' : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60'
                 }`}
               >
                 <p className={`text-xs uppercase tracking-wide ${f.dashed ? 'text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>
                   {f.label}
                 </p>
-                <p className={`mt-1 break-all font-semibold ${f.dashed ? 'text-slate-500 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                <p
+                  title={f.long ? f.value : undefined}
+                  className={`mt-1 break-words font-semibold ${f.dashed ? 'text-slate-500 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}
+                >
                   {f.value}
                 </p>
               </div>
             ))}
           </div>
-          {profileError ? <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700">{profileError}</p> : null}
+          {profileError ? <p className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">{profileError}</p> : null}
         </div>
 
         <div className="space-y-6">
           <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Quick Actions
+            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Quick actions
             </h3>
             <div className="space-y-3">
               <QuickActionCard

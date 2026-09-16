@@ -2,6 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage.jsx';
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
 import StudentDashboard from '../pages/student/StudentDashboard.jsx';
+import StudentAttendancePage from '../pages/student/StudentAttendancePage.jsx';
+import StudentProfilePage from '../pages/student/StudentProfilePage.jsx';
+import StudentChangePasswordPage from '../pages/student/StudentChangePasswordPage.jsx';
 import FacultyDashboard from '../pages/faculty/FacultyDashboard.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import { ROUTES, ROLES } from '../utils/constants.js';
@@ -66,6 +69,9 @@ export default function AppRoutes() {
         }
       >
         <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="attendance" element={<StudentAttendancePage />} />
+        <Route path="profile" element={<StudentProfilePage />} />
+        <Route path="change-password" element={<StudentChangePasswordPage />} />
         <Route index element={<Navigate to={ROUTES.STUDENT_DASHBOARD} replace />} />
         <Route path="*" element={<Navigate to={ROUTES.STUDENT_DASHBOARD} replace />} />
       </Route>

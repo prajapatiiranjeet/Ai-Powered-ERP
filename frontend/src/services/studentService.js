@@ -11,7 +11,7 @@ export const studentService = {
   updateProfile(dto) {
     return apiRequest('/students/update', { method: 'PUT', body: dto });
   },
-  changePassword(email, password) {
-    return apiRequest('/students/student-change-password', { method: 'PUT', body: { email, password } });
+  changePassword(currentPassword, newPassword) {
+    return apiRequest('/students/student-change-password', { method: 'PUT', body: { currentPassword, newPassword } });
   }
 };

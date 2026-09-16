@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import DashboardCard from '../../components/common/DashboardCard.jsx';
-import QuickActionCard from '../../components/common/QuickActionCard.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import ErrorMessage from '../../components/common/ErrorMessage.jsx';
-import StudentAttendancePanel from '../../components/student/StudentAttendancePanel.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { studentService } from '../../services/studentService.js';
 
@@ -45,27 +43,21 @@ export default function StudentDashboard() {
   const today = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <div className="space-y-6">
-      {/* Welcome banner */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 md:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-5">
+      {/* Welcome banner — slim section header style */}
+      <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 md:px-5 md:py-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {today}
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
-              Welcome back, {name.split(' ')[0]} 🎓
+            <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white md:text-xl">
+              Welcome back, {name.split(' ')[0]}
             </h2>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-              Noida International University · Student Portal
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Semester Active
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
-              Student
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Student access
             </span>
           </div>
         </div>
@@ -73,10 +65,10 @@ export default function StudentDashboard() {
 
       {/* Stat cards */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
           Academic Snapshot
         </h3>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="erp-stat-card border-slate-200 animate-pulse">
@@ -144,8 +136,8 @@ export default function StudentDashboard() {
       </section>
 
       {/* Profile + quick actions */}
-      <section className="grid gap-6 xl:grid-cols-3">
-        <div className="erp-card p-6 xl:col-span-2">
+      <section>
+        <div className="erp-card p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">My Profile</h3>
@@ -205,52 +197,7 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <QuickActionCard
-                accent="blue"
-                title="View Full Profile"
-                description="See all your academic details"
-                icon={
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                }
-              />
-              <QuickActionCard
-                accent="purple"
-                title="Edit Profile"
-                description="Update contact information"
-                icon={
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
-                }
-              />
-              <QuickActionCard
-                accent="teal"
-                title="Change Password"
-                description="Secure your account"
-                icon={
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                }
-              />
-            </div>
-          </div>
-        </div>
       </section>
-      {/* Students see the calculated subject-wise attendance below their profile. */}
-      <StudentAttendancePanel />
     </div>
   );
 }

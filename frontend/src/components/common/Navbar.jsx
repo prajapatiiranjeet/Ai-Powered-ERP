@@ -1,9 +1,9 @@
 export default function Navbar({ title, subtitle, userEmail, userName, onLogout, onMenuToggle, roleAccent }) {
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center gap-4 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 md:px-8 transition-colors duration-200">
+    <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b border-slate-200 bg-white px-4 dark:border-emerald-500/15 dark:bg-slate-900/95 md:gap-4 md:px-8">
       <button
         type="button"
-        className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
+        className="rounded-lg p-2 text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 md:hidden"
         onClick={onMenuToggle}
         aria-label="Open menu"
       >
@@ -20,27 +20,19 @@ export default function Navbar({ title, subtitle, userEmail, userName, onLogout,
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2.5">
           <img
-            src="/noida-international-university-logo-png_seeklogo-505931-removebg-preview.png"
-            alt="NIU Logo"
-            className="h-7 w-7 object-contain"
+            src="/Mainlogoerp.png"
+            alt="New Innovation University logo"
+            className="h-9 w-9 object-contain"
           />
-          <h1 className="truncate text-lg font-bold text-slate-900 dark:text-white md:text-xl">{title}</h1>
-          <span className="hidden rounded-md bg-niu-green-50 px-2 py-0.5 text-[11px] font-bold text-niu-green-600 ring-1 ring-niu-green-500/20 dark:bg-emerald-950 dark:text-emerald-300 sm:inline-block">
-            NIU System
-          </span>
+          <h1 className="truncate text-lg font-bold text-slate-900 md:text-xl">{title}</h1>
         </div>
         {subtitle ? <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 md:block">{subtitle}</p> : null}
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 dark:border-slate-800 dark:bg-slate-800/60 md:flex">
-          <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Online</span>
-        </div>
-
         {/* User Badge */}
-        <div className="flex items-center gap-3 rounded-full border border-slate-200/80 bg-white p-1 pl-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-800">
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 pl-3 dark:border-emerald-500/20 dark:bg-slate-800/70 dark:text-slate-100 md:gap-3 md:pl-3.5">
           <div className="hidden min-w-0 text-right md:block">
             {userName ? <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{userName}</p> : null}
             <p className="truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">{userEmail ?? '—'}</p>
@@ -54,7 +46,7 @@ export default function Navbar({ title, subtitle, userEmail, userName, onLogout,
         <button
           type="button"
           onClick={onLogout}
-          className="erp-btn-secondary hidden !px-3.5 !py-2 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 md:inline-flex"
+          className="erp-btn-secondary hidden !px-3.5 !py-2 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:border-rose-800 dark:hover:bg-rose-950/40 dark:hover:text-rose-300 md:inline-flex"
           title="Sign out"
         >
           <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

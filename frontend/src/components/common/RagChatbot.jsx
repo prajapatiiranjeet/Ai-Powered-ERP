@@ -1,454 +1,551 @@
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ragService } from '../../services/ragService.js';
-import LionIcon from './LionIcon.jsx';
 
+const LION_URL = 'https://cdn-icons-png.flaticon.com/512/4081/4081582.png';
 const roleLabels = { ADMIN: 'Admin', FACULTY: 'Faculty', STUDENT: 'Student' };
+const quickPrompts = [
+  'Exam Schedule & Syllabus',
+  'Fee Payment & Receipts',
+  'Attendance Report',
+  'Results & Grades'
+];
 
-const quickPromptsByRole = {
-  STUDENT: [
-    { icon: '📚', text: 'Exam Schedule & Syllabus' },
-    { icon: '💳', text: 'Fee Payment & Receipts' },
-    { icon: '📝', text: 'Attendance Requirements' },
-    { icon: '🏛️', text: 'Campus Facilities & Timings' },
-  ],
-  FACULTY: [
-    { icon: '📊', text: 'Student Grade Submission' },
-    { icon: '🗓️', text: 'Faculty Leave Application' },
-    { icon: '📖', text: 'Course Materials & Roster' },
-    { icon: '💡', text: 'Research Grant Support' },
-  ],
-  ADMIN: [
-    { icon: '👥', text: 'User Account Management' },
-    { icon: '📈', text: 'System Health & Metrics' },
-    { icon: '🔒', text: 'Security & Audit Logs' },
-    { icon: '📄', text: 'Generate Department Reports' },
-  ]
-};
+const DEFAULT_WIDGET_OFFSET = { right: 24, bottom: 24 };
+const DEFAULT_SIZE = { width: 380, height: 560 };
+const MIN_WIDGET_WIDTH = 300;
+const MAX_WIDGET_WIDTH = 600;
+const MIN_WIDGET_HEIGHT = 420;
+const WIDGET_VIEWPORT_PADDING = 8;
 
-// Web audio synthesizer for clean, subtle UI audio feedback
-const playChimeSound = (type = 'send') => {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+function Icon({ name, size = 17 }) {
+  const paths = {
+    sound: <><path d="M4 9v6h4l5 4V5L8 9H4Z" /><path d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10" /></>,
+    mute: <><path d="M4 9v6h4l5 4V5L8 9H4Z" /><path d="m18 9-5 6m0-6 5 6" /></>,
+    trash: <><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5" /></>,
+    minus: <path d="M5 12h14" />,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+    send: <><path d="m21 3-7.2 18-3.2-7.6L3 10.2 21 3Z" /><path d="M10.6 13.4 21 3" /></>,
+    grip: <><path d="M7 7h.01M12 7h.01M17 7h.01M7 12h.01M12 12h.01M17 12h.01" /></>,
+    plus: <><path d="M12 5v14M5 12h14" /></>
+  };
 
-    osc.type = 'sine';
-    if (type === 'send') {
-      osc.frequency.setValueAtTime(520, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-    } else {
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
+
+function SherpalAvatar({ size = 32 }) {
+  return (
+    <span
+      className="relative grid flex-shrink-0 place-items-center overflow-hidden rounded-2xl"
+      style={{
+        width: size,
+        height: size,
+        background:
+          'radial-gradient(circle at 30% 28%, rgba(52,211,153,0.55) 0%, rgba(16,185,129,0.28) 36%, rgba(4,47,35,0.92) 76%, rgba(2,20,15,1) 100%)'
+      }}
+    >
+      <img
+        src={LION_URL}
+        alt=""
+        aria-hidden="true"
+        style={{
+          width: Math.round(size * 0.78),
+          height: Math.round(size * 0.78),
+          objectFit: 'cover',
+          filter:
+            'saturate(1.05) contrast(1.02) brightness(0.98) drop-shadow(0 1px 0 rgba(255,255,255,0.12)) drop-shadow(0 3px 6px rgba(0,0,0,0.55))'
+        }}
+      />
+    </span>
+  );
+}
+
+function formatInline(text, keyPrefix = '') {
+  return String(text).split(/(\*\*.*?\*\*|`.*?`)/g).map((chunk, index) => {
+    const key = `${keyPrefix}-${index}`;
+    if (chunk.startsWith('**') && chunk.endsWith('**')) {
+      return <strong key={key} className="font-bold">{chunk.slice(2, -2)}</strong>;
     }
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.16);
-  } catch {
-    // Ignore audio context policy block
-  }
-};
-
-// Formats inline text (bold, code)
-function parseInlineFormatting(str) {
-  if (!str) return '';
-  const parts = str.split(/(\*\*.*?\*\*|`.*?`)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={index} className="font-extrabold text-emerald-300">
-          {part.slice(2, -2)}
-        </strong>
-      );
+    if (chunk.startsWith('`') && chunk.endsWith('`')) {
+      return <code key={key} className="rounded bg-slate-800/10 px-1.5 py-[1px] font-mono text-[12px] text-emerald-800 ring-1 ring-slate-800/10 dark:bg-emerald-900/60 dark:text-emerald-200 dark:ring-emerald-400/20">{chunk.slice(1, -1)}</code>;
     }
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return (
-        <code key={index} className="rounded bg-emerald-950/80 px-1.5 py-0.5 font-mono text-[11px] text-emerald-300 border border-emerald-500/30">
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    return part;
+    return chunk;
   });
 }
 
-// Renders Markdown Tables (| Col1 | Col2 |), bullet points, and paragraphs cleanly
-function renderFormattedMessage(text) {
-  if (!text) return null;
+function splitTableRow(line) {
+  const normalized = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return normalized.split('|').map((cell) => cell.trim());
+}
 
-  const lines = text.split('\n');
-  const elements = [];
-  let inTable = false;
-  let tableHeader = [];
-  let tableRows = [];
-  let currentKey = 0;
+function isTableSeparator(line) {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
 
-  const flushTable = () => {
-    if (tableHeader.length > 0) {
-      elements.push(
-        <div key={`table-${currentKey++}`} className="my-2.5 overflow-x-auto rounded-xl border border-emerald-500/30 bg-slate-950/80 p-0.5 shadow-inner">
-          <table className="min-w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-emerald-950/90 border-b border-emerald-500/30 text-[11px] font-extrabold text-emerald-300 uppercase tracking-wider">
-                {tableHeader.map((th, idx) => (
-                  <th key={idx} className="px-3 py-2 border-r border-emerald-500/20 last:border-r-0">
-                    {th.trim()}
-                  </th>
+function renderTable(lines, startIndex) {
+  const headers = splitTableRow(lines[startIndex]);
+  const rows = [];
+  let index = startIndex + 2;
+
+  while (index < lines.length && lines[index].trim().startsWith('|')) {
+    const cells = splitTableRow(lines[index]);
+    rows.push([...cells.slice(0, headers.length), ...Array(Math.max(0, headers.length - cells.length)).fill('')]);
+    index += 1;
+  }
+
+  return {
+    nextIndex: index,
+    element: (
+      <div className="sherpal-table-wrap my-2 w-full overflow-x-auto rounded-xl border border-emerald-200/70 bg-white/75 dark:border-emerald-700/50 dark:bg-slate-950/35">
+        <table className="min-w-full border-collapse text-left text-[11px] leading-snug">
+          <thead className="bg-emerald-50/80 text-emerald-950 dark:bg-emerald-950/60 dark:text-emerald-100">
+            <tr>
+              {headers.map((header, headerIndex) => (
+                <th key={`header-${headerIndex}`} className="whitespace-nowrap border-b border-emerald-200/80 px-2.5 py-2 font-bold dark:border-emerald-700/60">
+                  {formatInline(header, `header-${headerIndex}`)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={`row-${rowIndex}`} className="align-top even:bg-slate-50/70 dark:even:bg-white/[0.03]">
+                {row.map((cell, cellIndex) => (
+                  <td key={`cell-${rowIndex}-${cellIndex}`} className="border-b border-slate-200/80 px-2.5 py-2 text-slate-700 dark:border-slate-700/70 dark:text-slate-200">
+                    {formatInline(cell, `cell-${rowIndex}-${cellIndex}`)}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {tableRows.map((row, rIdx) => (
-                <tr key={rIdx} className={`border-b border-white/5 ${rIdx % 2 === 1 ? 'bg-slate-900/60' : 'bg-slate-950/40'} hover:bg-emerald-950/40 transition`}>
-                  {row.map((td, cIdx) => (
-                    <td key={cIdx} className="px-3 py-2 text-slate-200 border-r border-white/5 last:border-r-0">
-                      {parseInlineFormatting(td.trim())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
-    inTable = false;
-    tableHeader = [];
-    tableRows = [];
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
   };
+}
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const isTableRow = line.startsWith('|') && line.endsWith('|');
+function formatMessage(text) {
+  const lines = String(text || '').split('\n');
+  const content = [];
+  let index = 0;
 
-    if (isTableRow) {
-      const cells = line.split('|').slice(1, -1);
-      const isDivider = cells.every(c => c.trim().replace(/-/g, '').length === 0);
-
-      if (isDivider) {
-        continue;
-      }
-
-      if (!inTable) {
-        inTable = true;
-        tableHeader = cells;
-      } else {
-        tableRows.push(cells);
-      }
-    } else {
-      if (inTable) {
-        flushTable();
-      }
-
-      if (line.startsWith('- ') || line.startsWith('* ')) {
-        elements.push(
-          <div key={`li-${currentKey++}`} className="flex items-start gap-2 my-1 pl-1">
-            <span className="text-emerald-400 font-bold">•</span>
-            <span className="flex-1">{parseInlineFormatting(line.slice(2))}</span>
-          </div>
-        );
-      } else if (line) {
-        elements.push(
-          <p key={`p-${currentKey++}`} className="my-1 leading-relaxed">
-            {parseInlineFormatting(line)}
-          </p>
-        );
-      }
+  while (index < lines.length) {
+    if (lines[index].trim().startsWith('|') && lines[index + 1] && isTableSeparator(lines[index + 1])) {
+      const table = renderTable(lines, index);
+      content.push(<span key={`table-${index}`}>{table.element}</span>);
+      index = table.nextIndex;
+      continue;
     }
+
+    content.push(
+      <span key={`line-${index}`}>
+        {formatInline(lines[index], `line-${index}`)}
+        {index < lines.length - 1 && <br />}
+      </span>
+    );
+    index += 1;
   }
 
-  if (inTable) {
-    flushTable();
-  }
+  return content;
+}
 
-  return elements;
+function playChime(type) {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = type === 'send' ? 620 : 860;
+    gain.gain.setValueAtTime(0.035, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.12);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.12);
+  } catch {
+    // Browsers can block audio until user interaction.
+  }
+}
+
+function clampToViewport(nextX, nextY, width, height) {
+  const maxX = Math.max(WIDGET_VIEWPORT_PADDING, window.innerWidth - width - WIDGET_VIEWPORT_PADDING);
+  const maxY = Math.max(WIDGET_VIEWPORT_PADDING, window.innerHeight - height - WIDGET_VIEWPORT_PADDING);
+  return {
+    x: Math.min(Math.max(WIDGET_VIEWPORT_PADDING, nextX), maxX),
+    y: Math.min(Math.max(WIDGET_VIEWPORT_PADDING, nextY), maxY)
+  };
 }
 
 export default function RagChatbot({ role = 'STUDENT' }) {
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [question, setQuestion] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef(null);
+  const [size, setSize] = useState(DEFAULT_SIZE);
+  const [position, setPosition] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [messages, setMessages] = useState(() => [{
+    id: 1,
+    from: 'bot',
+    text: `Hello ${roleLabels[role] || 'there'}! I am **SHERPAL AI**, your New Innovation University assistant. How can I help you today?`,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }]);
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      from: 'bot',
-      text: `Hello ${roleLabels[role] ?? 'there'}! I am **SHERPAL AI**, your intelligent campus assistant. How can I help you today?`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }
-  ]);
+  const widgetRef = useRef(null);
+  const messagesRef = useRef(null);
+  const textareaRef = useRef(null);
+  const dragRef = useRef(null);
+  const resizeRef = useRef(null);
+  const frameRef = useRef(null);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const openWidget = () => {
+    setPosition(null);
+    setMinimized(false);
+    setVisible(true);
+    requestAnimationFrame(() => setOpen(true));
+  };
+
+  const closeWidget = () => {
+    setOpen(false);
+    window.setTimeout(() => {
+      setPosition(null);
+      dragRef.current = null;
+      resizeRef.current = null;
+      setIsDragging(false);
+      setIsResizing(false);
+      setVisible(false);
+    }, 300);
   };
 
   useEffect(() => {
-    if (open && !minimized) {
-      scrollToBottom();
-    }
-  }, [messages, open, minimized, isTyping]);
+    if (open && !minimized) messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, isTyping, open, minimized]);
 
-  const handleSend = async (textToSend) => {
-    const queryText = (textToSend || question).trim();
-    if (!queryText || isTyping) return;
+  useEffect(() => () => {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+  }, []);
 
-    if (soundEnabled) playChimeSound('send');
-
-    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMsg = {
-      id: Date.now(),
-      from: 'user',
-      text: queryText,
-      time: currentTime,
+  const clampSizeToViewport = useCallback((width, height) => {
+    const viewportMaxWidth = Math.max(MIN_WIDGET_WIDTH, window.innerWidth - WIDGET_VIEWPORT_PADDING * 2);
+    const viewportMaxHeight = Math.max(MIN_WIDGET_HEIGHT, window.innerHeight - WIDGET_VIEWPORT_PADDING * 2);
+    return {
+      width: Math.min(Math.max(MIN_WIDGET_WIDTH, width), Math.min(MAX_WIDGET_WIDTH, viewportMaxWidth)),
+      height: Math.min(Math.max(MIN_WIDGET_HEIGHT, height), Math.min(800, viewportMaxHeight))
     };
+  }, []);
 
-    setMessages((prev) => [...prev, userMsg]);
+  const handlePointerMove = useCallback((event) => {
+    if (dragRef.current) {
+      const widgetWidth = widgetRef.current?.offsetWidth || size.width;
+      const widgetHeight = widgetRef.current?.offsetHeight || size.height;
+      const nextX = event.clientX - dragRef.current.offsetX;
+      const nextY = event.clientY - dragRef.current.offsetY;
+      setPosition(clampToViewport(nextX, nextY, widgetWidth, widgetHeight));
+    }
+
+    if (resizeRef.current) {
+      const nextWidth = resizeRef.current.startWidth + (resizeRef.current.startX - event.clientX);
+      const nextHeight = resizeRef.current.startHeight + (resizeRef.current.startY - event.clientY);
+      const clamped = clampSizeToViewport(nextWidth, nextHeight);
+      if (!frameRef.current) {
+        frameRef.current = requestAnimationFrame(() => {
+          setSize(clamped);
+          frameRef.current = null;
+        });
+      }
+      if (position) {
+        const maxX = Math.max(WIDGET_VIEWPORT_PADDING, window.innerWidth - clamped.width - WIDGET_VIEWPORT_PADDING);
+        const maxY = Math.max(WIDGET_VIEWPORT_PADDING, window.innerHeight - clamped.height - WIDGET_VIEWPORT_PADDING);
+        setPosition((prev) => (prev ? {
+          x: Math.min(Math.max(WIDGET_VIEWPORT_PADDING, prev.x), maxX),
+          y: Math.min(Math.max(WIDGET_VIEWPORT_PADDING, prev.y), maxY)
+        } : prev));
+      }
+    }
+  }, [size.width, size.height, clampSizeToViewport, position]);
+
+  const stopPointerAction = useCallback(() => {
+    dragRef.current = null;
+    resizeRef.current = null;
+    setIsDragging(false);
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopPointerAction);
+    window.addEventListener('pointercancel', stopPointerAction);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopPointerAction);
+      window.removeEventListener('pointercancel', stopPointerAction);
+    };
+  }, [handlePointerMove, stopPointerAction]);
+
+  const startDrag = (event) => {
+    if (event.target.closest('button, a, textarea, input, select')) return;
+    if (minimized) return;
+    const rect = widgetRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    dragRef.current = { offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+    setIsDragging(true);
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+  };
+
+  const startResize = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    resizeRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: size.width,
+      startHeight: size.height
+    };
+    setIsResizing(true);
+  };
+
+  const updateQuestion = (event) => {
+    setQuestion(event.target.value);
+    event.target.style.height = 'auto';
+    event.target.style.height = `${Math.min(event.target.scrollHeight, 72)}px`;
+  };
+
+  const handleSend = async (textToSend = question) => {
+    const query = textToSend.trim();
+    if (!query || isTyping) return;
+    if (soundEnabled) playChime('send');
+    setMessages((current) => [...current, {
+      id: Date.now(), from: 'user', text: query,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
     setQuestion('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setIsTyping(true);
-
     try {
-      const answer = await ragService.ask(role, queryText);
-      if (soundEnabled) playChimeSound('receive');
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          from: 'bot',
-          text: typeof answer === 'string' ? answer : answer?.answer || 'SHERPAL AI returned an empty response.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }
-      ]);
+      const answer = await ragService.ask(role, query);
+      if (soundEnabled) playChime('receive');
+      setMessages((current) => [...current, {
+        id: Date.now() + 1,
+        from: 'bot',
+        text: typeof answer === 'string' ? answer : answer?.answer || 'SHERPAL AI returned an empty response.',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          from: 'bot',
-          text: `Sorry, SHERPAL AI could not answer right now. ${error?.message || 'Please try again.'}`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }
-      ]);
+      setMessages((current) => [...current, {
+        id: Date.now() + 1,
+        from: 'bot',
+        text: `SHERPAL AI could not answer right now. ${error?.message || 'Please try again.'}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    handleSend();
-  };
+  const clearChat = () => setMessages([{
+    id: Date.now(), from: 'bot', text: 'Conversation cleared. What can I help you find?',
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }]);
 
-  const handleClearChat = () => {
-    setMessages([
-      {
-        id: Date.now(),
-        from: 'bot',
-        text: `Conversation cleared. What else can **SHERPAL AI** help you with?`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }
-    ]);
-  };
+  const widgetPositionStyle = position
+    ? { left: position.x, top: position.y, right: 'auto', bottom: 'auto' }
+    : { right: DEFAULT_WIDGET_OFFSET.right, bottom: DEFAULT_WIDGET_OFFSET.bottom, left: 'auto', top: 'auto' };
 
-  const quickPrompts = quickPromptsByRole[role] || quickPromptsByRole.STUDENT;
+  const clampedSize = clampSizeToViewport(size.width, size.height);
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6 font-sans">
-      {/* Chat Window Container */}
-      {open && (
-        <section
-          className={`relative flex w-[min(410px,calc(100vw-2rem))] flex-col rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 animate-chat-pop border border-white/20 dark:border-emerald-500/30 backdrop-blur-2xl ${
-            minimized ? 'h-[68px]' : 'h-[min(580px,calc(100vh-6.5rem))]'
-          }`}
-          style={{
-            background: 'linear-gradient(145deg, rgba(8, 24, 19, 0.96), rgba(12, 38, 30, 0.95))',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-          }}
-          aria-label="SHERPAL AI Assistant"
-        >
-          {/* Header Bar */}
-          <div className="relative z-10 flex items-center justify-between p-3.5 border-b border-white/10 bg-gradient-to-r from-emerald-950/90 via-emerald-900/80 to-slate-950/90 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              {/* Lion Avatar Badge */}
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-950 p-1.5 text-emerald-400 border border-emerald-400/40 shadow-md">
-                <LionIcon className="h-5 w-5" glow={true} />
-                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-slate-950"></span>
-                </span>
-              </div>
+    <>
+      <style>{`
+        @keyframes sherpalMessage { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes sherpalDot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+        @keyframes sherpalAvatarPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.35); } 50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); } }
+        .sherpal-widget * { box-sizing: border-box; font-family: inherit; }
+        .sherpal-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(8, 25, 18, .28); backdrop-filter: blur(2px); }
+        html.dark .sherpal-backdrop { background: rgba(4, 15, 12, .52); }
+        .sherpal-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .sherpal-scroll::-webkit-scrollbar-track { background: rgba(18,84,79,.12); border-radius: 999px; }
+        .sherpal-scroll::-webkit-scrollbar-thumb { background: rgba(16,185,129,.5); border-radius: 99px; }
+        html.dark .sherpal-scroll::-webkit-scrollbar-thumb { background: rgba(52,211,153,.55); }
+        .sherpal-message { animation: sherpalMessage 150ms ease both; }
+        .sherpal-chip { flex: 0 0 auto; transition: background 150ms ease, color 150ms ease, transform 150ms ease, border-color 150ms ease; }
+        .sherpal-chip:hover { background: rgba(16,185,129,.12) !important; color: #047857 !important; border-color: rgba(16,185,129,.4) !important; }
+        html.dark .sherpal-chip:hover { background: rgba(16,185,129,.18) !important; color: #6ee7b7 !important; border-color: rgba(52,211,153,.45) !important; }
+        .sherpal-launcher { transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease; animation: sherpalAvatarPulse 2.6s ease-in-out infinite; }
+        .sherpal-launcher:hover { transform: translateY(-1px) scale(1.02); filter: saturate(1.05); }
+        .sherpal-typing-dot { animation: sherpalDot 900ms ease-in-out infinite; background: #fbbf24; }
+        html.dark .sherpal-typing-dot { background: #fcd34d; }
+        @media (max-width: 767px) {
+          .sherpal-backdrop { background: rgba(8, 25, 18, .42); }
+          .sherpal-launcher { right: 16px !important; bottom: 16px !important; width: 54px !important; height: 54px !important; }
+          .sherpal-widget { inset: 0 !important; width: 100vw !important; height: 100dvh !important; max-height: none !important; border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; }
+          .sherpal-widget .sherpal-scroll { overscroll-behavior: contain; }
+        }
+      `}</style>
 
-              <div>
+      {!visible && (
+        <button
+          type="button"
+          className="sherpal-launcher fixed z-[60] flex items-center justify-center"
+          onClick={openWidget}
+          aria-label="Open SHERPAL AI"
+          style={{
+            right: DEFAULT_WIDGET_OFFSET.right,
+            bottom: DEFAULT_WIDGET_OFFSET.bottom,
+            width: 60,
+            height: 60,
+            padding: 4
+          }}
+        >
+          <SherpalAvatar size={52} />
+        </button>
+      )}
+
+      {visible && <div className="sherpal-backdrop" aria-hidden="true" />}
+
+      {visible && (
+        <section
+          ref={widgetRef}
+          className="sherpal-widget fixed z-[60] flex flex-col overflow-hidden rounded-[22px] border border-emerald-700/30 bg-white text-slate-900 shadow-[0_22px_70px_rgba(0,0,0,.28)] backdrop-blur-xl dark:border-emerald-500/30 dark:bg-[#0a1d18] dark:text-slate-100 dark:shadow-[0_22px_70px_rgba(0,0,0,.6)]"
+          aria-label="SHERPAL AI Assistant"
+          style={{
+            ...widgetPositionStyle,
+            width: `min(${clampedSize.width}px, calc(100vw - 32px))`,
+            height: minimized ? 68 : `min(${clampedSize.height}px, calc(100vh - 32px))`,
+            opacity: open ? 1 : 0,
+            transform: open ? 'scale(1)' : 'scale(.92)',
+            pointerEvents: open ? 'auto' : 'none',
+            transition: isDragging || isResizing ? 'none' : 'opacity 280ms ease, transform 280ms ease, box-shadow 200ms ease'
+          }}
+        >
+          {!minimized && (
+            <button
+              type="button"
+              aria-label="Resize SHERPAL AI"
+              onPointerDown={startResize}
+              className="absolute left-0.5 top-0.5 z-[2] grid h-[25px] w-[25px] place-items-center rounded-md border-0 bg-transparent p-0 text-emerald-800/70 hover:bg-white/30 dark:text-emerald-300/70 dark:hover:bg-white/5 cursor-nw-resize"
+            >
+              <Icon name="grip" size={18} />
+            </button>
+          )}
+
+          <header
+            onPointerDown={startDrag}
+            className="flex min-h-[68px] items-center justify-between gap-2.5 border-b border-emerald-700/25 bg-[linear-gradient(180deg,rgba(8,48,36,0.98),rgba(5,32,24,0.98))] px-4 py-2.5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),inset_0_-1px_0_rgba(0,0,0,0.28)] select-none dark:border-emerald-400/20"
+            style={{ cursor: minimized ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
+          >
+            <div className="flex min-w-0 items-center gap-2.5">
+              <SherpalAvatar size={36} />
+              <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm font-black tracking-tight text-white">
-                    SHERPAL AI
-                  </h3>
-                  <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  <strong className="truncate text-[14px] tracking-[.08em] text-white">SHERPAL AI</strong>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-1.5 py-[1px] text-[9px] font-bold tracking-[.08em] text-emerald-100 ring-1 ring-emerald-300/10">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_6px_rgba(110,231,183,0.9)]" />
                     RAG
                   </span>
                 </div>
-                <p className="text-[11px] font-medium text-emerald-200/80">
-                  NIU Assistant · {roleLabels[role] ?? role}
+                <p className="mt-0.5 truncate text-[11px] text-emerald-100/85">
+                  New Innovation University assistant for {roleLabels[role] || role} users.
                 </p>
               </div>
             </div>
-
-            {/* Header Control Buttons */}
-            <div className="flex items-center gap-1 text-slate-300">
-              <button
-                type="button"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="rounded-xl p-1.5 hover:bg-white/10 hover:text-white transition-colors"
-                title={soundEnabled ? 'Mute Sound' : 'Enable Sound'}
-                aria-label="Toggle Sound"
-              >
-                {soundEnabled ? (
-                  <svg className="h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                ) : (
-                  <svg className="h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-                )}
-              </button>
-
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <ControlButton label={soundEnabled ? 'Mute sound' : 'Enable sound'} onClick={() => setSoundEnabled((current) => !current)}>
+                <Icon name={soundEnabled ? 'sound' : 'mute'} />
+              </ControlButton>
               {!minimized && (
-                <button
-                  type="button"
-                  onClick={handleClearChat}
-                  className="rounded-xl p-1.5 hover:bg-white/10 hover:text-white transition-colors"
-                  title="Clear Conversation"
-                  aria-label="Clear Chat"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
+                <ControlButton label="Clear chat" onClick={clearChat}>
+                  <Icon name="trash" />
+                </ControlButton>
               )}
-
-              <button
-                type="button"
-                onClick={() => setMinimized(!minimized)}
-                className="rounded-xl p-1.5 hover:bg-white/10 hover:text-white transition-colors"
-                title={minimized ? 'Expand Window' : 'Minimize Window'}
-                aria-label="Minimize Chat"
-              >
-                {minimized ? (
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"/></svg>
-                ) : (
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-xl p-1.5 hover:bg-rose-500/20 hover:text-rose-300 transition-colors"
-                title="Close Assistant"
-                aria-label="Close Assistant"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
+              <ControlButton label={minimized ? 'Expand chat' : 'Minimize chat'} onClick={() => setMinimized((current) => !current)}>
+                <Icon name={minimized ? 'plus' : 'minus'} />
+              </ControlButton>
+              <ControlButton label="Close chat" onClick={closeWidget}>
+                <Icon name="close" />
+              </ControlButton>
             </div>
-          </div>
+          </header>
 
-          {/* Messages Area */}
           {!minimized && (
             <>
-              <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3.5 text-sm text-slate-100 scrollbar-thin scrollbar-thumb-emerald-800/40">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex items-start gap-2.5 ${msg.from === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                  >
-                    {msg.from === 'bot' ? (
-                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl bg-slate-950 p-1 text-emerald-400 border border-emerald-500/30 shadow">
-                        <LionIcon className="h-4.5 w-4.5" />
-                      </div>
-                    ) : (
-                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xs font-bold text-white shadow">
-                        U
-                      </div>
-                    )}
-
-                    <div className={`flex flex-col ${msg.from === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div
-                        className={`max-w-[88%] px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed ${
-                          msg.from === 'user'
-                            ? 'rounded-2xl rounded-tr-xs bg-emerald-600 text-white border border-emerald-400/30'
-                            : 'rounded-2xl rounded-tl-xs bg-slate-900/90 text-slate-100 border border-white/10'
-                        }`}
-                      >
-                        {renderFormattedMessage(msg.text)}
-                      </div>
-                      <span className="mt-1 px-1 text-[10px] font-medium text-emerald-300/50">
-                        {msg.time}
-                      </span>
+              <div
+                ref={messagesRef}
+                className="sherpal-scroll flex-1 min-h-0 overflow-y-auto bg-slate-50 px-3.5 py-4 dark:bg-[#081914]"
+              >
+                {messages.map((message) => (
+                  <article key={message.id} className="sherpal-message mb-3 flex" style={{ justifyContent: message.from === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '84%', display: 'flex', flexDirection: 'column', alignItems: message.from === 'user' ? 'flex-end' : 'flex-start' }}>
+                      {message.from === 'user' ? (
+                        <div className="rounded-2xl rounded-br-[5px] bg-gradient-to-br from-[#2d6a3f] to-[#1f5835] px-3.5 py-2.5 text-[13px] leading-snug font-medium text-white shadow shadow-emerald-900/10 break-words">
+                          {formatMessage(message.text)}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl rounded-bl-[5px] border border-slate-200 bg-white px-3.5 py-2.5 text-[13px] leading-snug font-medium text-slate-800 shadow-sm break-words dark:border-slate-700/80 dark:bg-slate-900 dark:text-slate-100">
+                          {formatMessage(message.text)}
+                        </div>
+                      )}
+                      <time className="mt-1 px-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                        {message.time}
+                      </time>
                     </div>
-                  </div>
+                  </article>
                 ))}
-
                 {isTyping && (
-                  <div className="flex items-start gap-2.5">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl bg-slate-950 p-1 text-emerald-400 border border-emerald-500/30">
-                      <LionIcon className="h-4.5 w-4.5 animate-pulse" glow={true} />
-                    </div>
-                    <div className="rounded-2xl rounded-tl-xs bg-slate-900/90 px-3.5 py-2.5 border border-white/10 flex items-center gap-2">
-                      <span className="text-xs font-medium text-emerald-300">Sherpal AI thinking</span>
-                      <div className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                      </div>
-                    </div>
+                  <div className="flex w-fit gap-1.5 rounded-2xl rounded-bl-[5px] border border-slate-200 bg-slate-100 px-3.5 py-3 dark:border-slate-700/70 dark:bg-slate-800/80">
+                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '0ms' }} />
+                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '120ms' }} />
+                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '240ms' }} />
                   </div>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
-              {/* Quick Prompts */}
-              <div className="px-3 py-2 border-t border-white/5 bg-slate-950/50">
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {quickPrompts.map((prompt, idx) => (
+              {!question.trim() && (
+                <div className="sherpal-scroll flex gap-1.5 overflow-x-auto border-t border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700/80 dark:bg-slate-950">
+                  {quickPrompts.map((prompt) => (
                     <button
-                      key={idx}
+                      key={prompt}
                       type="button"
-                      onClick={() => handleSend(prompt.text)}
-                      className="whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-200 hover:bg-emerald-600/30 hover:border-emerald-400 hover:text-emerald-300 transition flex items-center gap-1.5 flex-shrink-0"
+                      className="sherpal-chip rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap text-slate-700 hover:border-emerald-500/50 hover:bg-emerald-50 hover:text-emerald-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      onClick={() => handleSend(prompt)}
                     >
-                      <span>{prompt.icon}</span>
-                      <span>{prompt.text}</span>
+                      {prompt}
                     </button>
                   ))}
                 </div>
-              </div>
+              )}
 
-              {/* Message Writing Section - Clean, Sleek & Neat */}
-              <form onSubmit={handleSubmit} className="p-3 bg-slate-950/90 border-t border-white/10">
-                <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/25 bg-slate-900/90 p-1.5 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20 transition-all">
-                  <input
-                    type="text"
-                    className="min-w-0 flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm font-medium text-white placeholder-slate-400 outline-none"
-                    placeholder="Type your message to Sherpal AI..."
+              <form
+                onSubmit={(event) => { event.preventDefault(); handleSend(); }}
+                className="border-t border-slate-200 bg-white px-3 py-3 dark:border-slate-700/80 dark:bg-slate-950"
+              >
+                <div className="flex items-end gap-2 rounded-2xl border border-slate-300 bg-slate-50 p-1.5 shadow-sm dark:border-slate-600 dark:bg-slate-900">
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
                     value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
+                    onChange={updateQuestion}
                     disabled={isTyping}
+                    placeholder="Type your message to Sherpal AI..."
+                    onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleSend(); } }}
+                    className="min-h-[30px] flex-1 resize-none bg-transparent px-2 py-1.5 text-[13px] leading-snug font-medium text-slate-900 placeholder:text-slate-500 outline-none dark:text-slate-100 dark:placeholder:text-slate-400"
                   />
                   <button
                     type="submit"
                     disabled={!question.trim() || isTyping}
-                    className="flex h-8.5 w-8.5 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                     aria-label="Send message"
-                    title="Send message"
+                    className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2d6a3f] to-[#164c2b] text-white shadow-sm transition-transform hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100"
                   >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
+                    <Icon name="send" size={18} />
                   </button>
                 </div>
               </form>
@@ -456,28 +553,20 @@ export default function RagChatbot({ role = 'STUDENT' }) {
           )}
         </section>
       )}
+    </>
+  );
+}
 
-      {/* Floating Button with Lion Icon */}
-      <button
-        type="button"
-        onClick={() => {
-          setOpen((prev) => !prev);
-          setMinimized(false);
-        }}
-        className="group relative flex items-center gap-2.5 rounded-full border border-emerald-400/40 bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-xl backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-emerald-400 active:scale-95"
-        aria-expanded={open}
-        aria-label={open ? 'Close SHERPAL AI assistant' : 'Open SHERPAL AI assistant'}
-      >
-        <div className="relative flex items-center gap-2">
-          <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-slate-950 p-1 text-emerald-400 border border-emerald-400/40">
-            <LionIcon className="h-4 w-4" glow={true} />
-            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          </div>
-          <span className="tracking-wide text-slate-100 font-extrabold">
-            {open ? (minimized ? 'SHERPAL AI' : 'Close') : 'SHERPAL AI'}
-          </span>
-        </div>
-      </button>
-    </div>
+function ControlButton({ label, onClick, children }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="grid h-7 w-7 place-items-center rounded-md border-0 bg-transparent p-0 text-white/88 transition hover:bg-white/15 hover:text-white active:scale-95"
+    >
+      {children}
+    </button>
   );
 }

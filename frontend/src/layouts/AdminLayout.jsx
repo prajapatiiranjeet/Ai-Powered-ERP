@@ -7,10 +7,10 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { ROUTES } from '../utils/constants.js';
 
 const ADMIN_NAV = [
-  { path: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: '📊' },
-  { path: '/admin/students', label: 'Students', icon: '👨‍🎓', comingSoon: true },
-  { path: '/admin/faculty', label: 'Faculty', icon: '👨‍🏫', comingSoon: true },
-  { path: '/admin/departments', label: 'Departments & Courses', icon: '🏛️', comingSoon: true }
+  { path: ROUTES.ADMIN_DASHBOARD, label: 'Dashboard', icon: 'dashboard' },
+  { path: '/admin/students', label: 'Students', icon: 'students', comingSoon: true },
+  { path: '/admin/faculty', label: 'Faculty', icon: 'faculty', comingSoon: true },
+  { path: '/admin/departments', label: 'Departments and courses', icon: 'departments', comingSoon: true }
 ];
 
 export default function AdminLayout() {
@@ -24,7 +24,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#07130f] dark:text-slate-100 lg:pl-64 transition-colors duration-200">
+    <div className="erp-shell min-h-screen bg-slate-50 text-slate-900 md:pl-64">
       <Sidebar
         role="ADMIN"
         roleAccent="admin"

@@ -96,7 +96,7 @@ export default function KnowledgeUploadPanel() {
       setCurrentUploadingFile('');
       if (uploadedCount > 0) {
         setUploadSuccess(
-          `🎉 ${uploadedCount} document${uploadedCount === 1 ? '' : 's'} uploaded and indexed into RAG memory successfully!`
+          `${uploadedCount} document${uploadedCount === 1 ? '' : 's'} uploaded and indexed into RAG memory successfully.`
         );
       }
     }, 500);
@@ -121,7 +121,7 @@ export default function KnowledgeUploadPanel() {
   return (
     <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-colors duration-200">
       {/* Panel Header */}
-      <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-r from-niu-green-900 to-slate-900 p-5 text-white dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between md:p-6">
+      <div className="flex flex-col gap-4 border-b border-slate-100 bg-niu-green-900 p-5 text-white dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between md:p-6">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-niu-gold-400 text-slate-950 shadow-md">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -138,7 +138,7 @@ export default function KnowledgeUploadPanel() {
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <h3 className="text-lg font-black text-white">Upload University Documents</h3>
-            <p className="mt-0.5 text-xs text-emerald-100/80">
+            <p className="mt-0.5 text-xs text-emerald-100">
               Add policies, syllabi, and notices. Indexing documents updates Sherpal AI answers instantly across the portal.
             </p>
           </div>
@@ -247,12 +247,38 @@ export default function KnowledgeUploadPanel() {
         {/* Right Side Document Library */}
         <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/50 md:col-span-5">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Document Library
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Document library
             </p>
             <span className="rounded-full bg-niu-green-100 px-2 py-0.5 text-xs font-black text-niu-green-800 dark:bg-emerald-900/60 dark:text-emerald-300">
               {documents.length}
             </span>
+          </div>
+
+          {/* Filter tabs */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {[
+              { key: 'ALL', label: 'All' },
+              { key: 'PENDING', label: 'Pending' },
+              { key: 'INDEXED', label: 'Indexed' }
+            ].map((tab) => {
+              const active = filterTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setFilterTab(tab.key)}
+                  className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                    active
+                      ? 'bg-niu-green-600/95 text-white shadow ring-1 ring-emerald-200 dark:bg-emerald-600 dark:text-white dark:ring-emerald-400/40'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`}
+                  aria-pressed={active}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -263,13 +289,24 @@ export default function KnowledgeUploadPanel() {
                     {doc.name}
                   </p>
                   <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                    {doc.size} · <span className={doc.tone === 'amber' ? 'text-amber-600' : doc.tone === 'rose' ? 'text-rose-600' : 'text-emerald-600'}>{doc.status}</span>
+                    {doc.size} ·{' '}
+                    <span
+                      className={
+                        doc.tone === 'amber'
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : doc.tone === 'rose'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-emerald-600 dark:text-emerald-400'
+                      }
+                    >
+                      {doc.status}
+                    </span>
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeDocument(doc.id)}
-                  className="ml-2 rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                  className="ml-2 rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-500 dark:hover:bg-rose-950/50 dark:hover:text-rose-400 transition"
                   title="Remove document"
                 >
                   ×

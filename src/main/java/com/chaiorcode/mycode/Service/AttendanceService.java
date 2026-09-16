@@ -3,7 +3,10 @@ package com.chaiorcode.mycode.Service;
 import com.chaiorcode.mycode.DTO.AttendanceMarkItem;
 import com.chaiorcode.mycode.DTO.AttendanceMarkRequest;
 import com.chaiorcode.mycode.DTO.AttendanceRosterItem;
+import com.chaiorcode.mycode.DTO.AttendanceRecordDTO;
 import com.chaiorcode.mycode.DTO.AttendanceSummaryDTO;
+import com.chaiorcode.mycode.DTO.AttendanceSubjectSummaryDTO;
+import com.chaiorcode.mycode.DTO.StudentAttendanceReportDTO;
 import com.chaiorcode.mycode.Entity.Attendance;
 import com.chaiorcode.mycode.Entity.Student;
 import com.chaiorcode.mycode.Entity.SubjectOffering;
@@ -110,6 +113,37 @@ public class AttendanceService {
                 .toList();
     }
 
+            @Transactional(readOnly = true)
+            public StudentAttendanceReportDTO getStudentReport(String studentEmail) {
+            Student student = studentRepository.findByUserEmail(studentEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+            List<Attendance> records = attendanceRepository.findByStudentIdWithOffering(student.getId());
+
+            long present = records.stream().filter(record -> record.getStatus() == AttendanceStatus.PRESENT).count();
+            long absent = records.stream().filter(record -> record.getStatus() == AttendanceStatus.ABSENT).count();
+            long leave = records.stream().filter(record -> record.getStatus() == AttendanceStatus.LEAVE).count();
+            long total = records.size();
+            double percentage = total == 0 ? 0 : Math.round((present * 10000.0) / total) / 100.0;
+
+            Map<Long, List<Attendance>> byOffering = records.stream()
+                .collect(Collectors.groupingBy(record -> record.getSubjectOffering().getId()));
+            List<AttendanceSubjectSummaryDTO> subjectSummaries = byOffering.values().stream()
+                .map(this::toSubjectSummary)
+                .sorted((left, right) -> left.getSubjectCode().compareToIgnoreCase(right.getSubjectCode()))
+                .toList();
+            List<AttendanceRecordDTO> detailRecords = records.stream()
+                .map(record -> new AttendanceRecordDTO(
+                    record.getSubjectOffering().getId(),
+                    record.getSubjectOffering().getCsbs().getSubject().getCode(),
+                    record.getSubjectOffering().getCsbs().getSubject().getName(),
+                    record.getDate(),
+                    record.getStatus()))
+                .sorted((left, right) -> right.getDate().compareTo(left.getDate()))
+                .toList();
+
+            return new StudentAttendanceReportDTO(total, present, absent, leave, percentage, subjectSummaries, detailRecords);
+            }
+
     private SubjectOffering getOwnedOffering(String facultyEmail, Long offeringId) {
         // Resolve the authenticated faculty email to an ID and scope the offering query by that ID.
         Long facultyId = facultyRepo.findIdByUserEmail(facultyEmail);
@@ -137,6 +171,27 @@ public class AttendanceService {
                 absent,
                 leave,
                 total,
+                percentage);
+    }
+
+    private AttendanceSubjectSummaryDTO toSubjectSummary(List<Attendance> records) {
+        SubjectOffering offering = records.get(0).getSubjectOffering();
+        long present = records.stream().filter(record -> record.getStatus() == AttendanceStatus.PRESENT).count();
+        long absent = records.stream().filter(record -> record.getStatus() == AttendanceStatus.ABSENT).count();
+        long leave = records.stream().filter(record -> record.getStatus() == AttendanceStatus.LEAVE).count();
+        long total = records.size();
+        double percentage = total == 0 ? 0 : Math.round((present * 10000.0) / total) / 100.0;
+        return new AttendanceSubjectSummaryDTO(
+                offering.getId(),
+                offering.getCsbs().getSubject().getCode(),
+                offering.getCsbs().getSubject().getName(),
+                total,
+                present,
+                0,
+                leave,
+                absent,
+                0,
+                present,
                 percentage);
     }
 
