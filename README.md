@@ -150,22 +150,66 @@ Gemini keys in `application.properties` are commented out (Ollama is active).
 ## Folder structure
 
 ```
-├── src/main/java/com/chaiorcode/mycode/
-│   ├── Controller/     Auth, Admin, Faculty, Student
-│   ├── Service/        Auth, academic, attendance, Sherpal, RAG chunk/retrieve
-│   ├── Entity/ Repo/ DTO/ Enum/
-│   ├── security/       JWT filter + SecurityFilterChain
-│   └── config/         ChatClient bean
-├── src/main/resources/application.properties
-├── frontend/src/
-│   ├── pages/          Login; admin/faculty/student dashboards; student profile/attendance/password
-│   ├── layouts/        AdminLayout, FacultyLayout, StudentLayout + Sidebar/Navbar/SHERPAL
-│   ├── components/     KnowledgeUploadPanel, SubjectAssignmentPanel, FacultyAttendancePanel, RagChatbot
-│   ├── context/        AuthContext
-│   ├── routes/         ProtectedRoute
-│   └── services/       api, auth, admin, faculty, student, rag
-├── ForREADME/          Screenshots
-└── pom.xml
+├  📁 .mvn
+│  └  📁 wrapper
+├  📁 .postman
+├  📁 db
+├  📁 demodata
+│  ├  📁 pgvector-master
+│  │  ├  📁 .github
+│  │  │  └  📁 workflows
+│  │  ├  📁 sql
+│  │  ├  📁 src
+│  │  ├  📁 test
+│  │  │  ├  📁 expected
+│  │  │  ├  📁 perl
+│  │  │  │  └  📁 PostgreSQL
+│  │  │  │     └  📁 Test
+│  │  │  ├  📁 sql
+│  │  │  └  📁 t
+├  📁 ForREADME
+├  📁 frontend
+│  ├  📁 public
+│  ├  📁 src
+│  │  ├  📁 components
+│  │  │  ├  📁 admin
+│  │  │  ├  📁 common
+│  │  │  ├  📁 faculty
+│  │  │  └  📁 student
+│  │  ├  📁 context
+│  │  ├  📁 hooks
+│  │  ├  📁 layouts
+│  │  ├  📁 pages
+│  │  │  ├  📁 admin
+│  │  │  ├  📁 faculty
+│  │  │  ├  📁 student
+│  │  ├  📁 routes
+│  │  ├  📁 services
+│  │  ├  📁 utils
+├  📁 postman
+│  └  📁 globals
+├  📁 src
+│  ├  📁 main
+│  │  ├  📁 java
+│  │  │  └  📁 com
+│  │  │     └  📁 chaiorcode
+│  │  │        └  📁 mycode
+│  │  │           ├  📁 config
+│  │  │           ├  📁 Controller
+│  │  │           ├  📁 DTO
+│  │  │           ├  📁 Entity
+│  │  │           ├  📁 Enum
+│  │  │           ├  📁 Repo
+│  │  │           ├  📁 security
+│  │  │           ├  📁 Service
+│  │  └  📁 resources
+│  └  📁 test
+│     └  📁 java
+│        └  📁 com
+│           └  📁 chaiorcode
+│              └  📁 mycode
+│                 ├  📁 Service
+
 ```
 
 ---
