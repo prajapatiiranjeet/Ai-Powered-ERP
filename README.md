@@ -232,25 +232,6 @@ curl -X POST http://localhost:8080/admin/assign-subject-to-faculty \
 
 ---
 
-## Important gotchas & troubleshooting
 
-- Embedding dimension mismatch: If you change embedding model, update spring.ai.vectorstore.pgvector.dimensions accordingly — otherwise nearest-neighbor ops will break. After change: DROP the vector table and reinitialize.
-- File upload limits: set by spring.servlet.multipart.max-file-size and max-request-size (current defaults 100MB).
-- First admin must be created manually (see SQL above).
-- Ollama must be running and models pulled before asking SHERPAL or indexing documents.
-- If the schema create fails, check DB permissions for the user; schema initialization uses the configured datasource user.
-- If RAG results are empty, ensure vectorStore.add(...) ran successfully — check logs and the vector store table after upload.
-
----
-
-## What this file does NOT (yet) show
-- Full DDL for the vector table created by Spring AI's pgvector integration (I can add the exact DDL after a local run).
-- Complete examples for all admin UI flows (I added the most-used curl examples).
-- Production hardening: TLS, CORS, secure storage of secrets, database migrations (Flyway/Liquibase), and logging/metrics.
-
----
-
-## Next steps I can take
-- Add the exact PG DDL used by Spring AI's pgvector integration after running locally and inspecting the created table.
 - Create a small script to generate a BCrypt hash from the command line to simplify creating the first admin.
 - Open a PR that adds README.dev.md and links to it from README.md.
