@@ -1,237 +1,271 @@
-# AI-Powered ERP (Developer Guide)
+# AI-Powered ERP
 
-Independent academic ERP with JWT role portals (Admin, Faculty, Student) and SHERPAL — a role-aware RAG assistant over uploaded documents.
+Independent academic ERP with JWT role portals (Admin, Faculty, Student) and **SHERPAL**, a RAG assistant over uploaded documents.
 
-This file is a developer-focused README that includes exact env vars, copy-paste examples (SQL + curl), pgvector & Ollama install steps, where to find Sherpal/embedding code, and warnings about embedding dimensions.
+Backend: **Spring Boot 3.5.14** (Java 21) + PostgreSQL + PGVector. Frontend: **React 18 + Vite 5 + Tailwind CSS**.
 
----
+Work in progress. Auth, dashboards, admin CRUD, attendance, document indexing, and SHERPAL chat work. Fees, grades, and some sidebar pages are not built yet.
 
-## TL;DR — Yes you can run locally
-
-- Backend (Spring Boot, port 8080)
-  - ./mvnw spring-boot:run
-- Frontend (Vite, port 5173)
-  - cd frontend
-  - npm install
-  - npm run dev
-- PostgreSQL with `pgvector` extension and Ollama running locally (models pulled).
+[![Spring Boot](https://img.shields.io/badge/Spring--Boot-3.5.14-brightgreen.svg?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg?logo=java)](https://www.oracle.com/java/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg?logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind--CSS-3.x-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue.svg?logo=postgresql)](https://www.postgresql.org/)
 
 ---
 
-## Quick checklist (fresh machine)
+## Features
 
-1. Install JDK 21+, Node 18+, npm
-2. Install PostgreSQL 14+ and pgvector extension (see below)
-3. Install Ollama and pull models (see below)
-4. Create database and extension:
-   ```sql
-   CREATE DATABASE erpdemo;
-   \c erpdemo
-   CREATE EXTENSION IF NOT EXISTS vector;
-   ```
-5. Set environment variables:
-   - Linux/macOS:
-     ```bash
-     export DB_PASSWORD="your_postgres_password"
-     export JWT_SECRET="a-long-local-development-secret"
-     ```
-   - Windows PowerShell:
-     ```powershell
-     $env:DB_PASSWORD="your_postgres_password"
-     $env:JWT_SECRET="a-long-local-development-secret"
-     ```
-6. Edit src/main/resources/application.properties only if you need non-default ports/URLs (sample below).
-7. Start Ollama, start backend, then frontend.
+**Auth**
+- `POST /auth/login` — email/password → JWT (`id`, `jwt`, `role`, `name`, `email`)
+- Roles: `ADMIN`, `FACULTY`, `STUDENTS` (UI maps `STUDENTS` → Student)
+- `/admin/**` is ADMIN-only. `/faculty/**` is ADMIN + FACULTY. `/students/**` is ADMIN + STUDENT/STUDENTS. CORS enabled.
 
----
+**Admin**
+- Register admin / faculty / student; update/delete students; update faculty; change user password
+- Stats: students, faculty count, departments, courses
+- Department + course create; lookup departments → courses → branches
+- Assign subjects to faculty (department/course/branch/batch/section)
+- Student auto batch/section on register; faculty/student IDs generated in backend
+- RAG upload: PDF, DOC, DOCX (multipart, 100MB)
 
-## What this file adds
+**Faculty**
+- Profile, assigned offerings, attendance roster by date, mark PRESENT / ABSENT / LEAVE
+- Profile update + password change APIs (UI still mainly on the dashboard)
 
-- explicit pgvector install guidance,
-- Ollama install + model pull commands,
-- full sample application.properties excerpts and env var list,
-- "first admin" SQL insert example (with how to generate BCrypt password),
-- curl examples for login, upload, and SHERPAL ask-to-sherpal,
-- pointer to Sherpal/Chunking/Retrieval code locations in the repo,
-- important gotchas (embedding dimension, file size limits, how RAG flow works).
+**Student**
+- Dashboard profile snapshot; edit profile; change password (current + new)
+- Attendance: overall %, subject totals, date-wise records
+
+**SHERPAL**
+- Role endpoints: `POST /admin|faculty|students/ask-to-sherpal`
+- Answers from PGVector docs + authenticated profile (students also get attendance context)
+- Widget: drag/resize, sound, typing, markdown tables, quick prompts
+- Follows OS dark/light preference
 
 ---
 
-## Full sample application.properties (important keys)
+## Tech stack
 
-Place non-secret values in `src/main/resources/application.properties`. Secrets should be provided via environment variables as shown above.
+**Backend:** Java 21, Spring Boot 3.5.14, Spring Security + JJWT 0.13.0, Spring Data JPA, PostgreSQL, Lombok, Validation, Apache POI 5.4.1, Spring AI 1.1.4 (Ollama + PGVector + PDF/Tika readers).
 
-```properties
-# Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/erpdemo
-spring.datasource.username=postgres
-spring.datasource.password=${DB_PASSWORD:}
+**Frontend:** React 18.3, Vite 5.3 (dev proxy to `:8080`), Tailwind 3.4 (`darkMode: class`), React Router 6.26, Context JWT (`erp_token` in localStorage). Logo: `frontend/public/Mainlogoerp.png`.
 
-# Ollama (local)
-spring.ai.model.embedding=ollama
-spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.chat.options.model=phi4-mini:3.8b
-spring.ai.ollama.chat.options.temperature=0
-spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b
-
-# PGVector
-spring.ai.vectorstore.pgvector.initialize-schema=true
-spring.ai.vectorstore.pgvector.index-type=hnsw
-spring.ai.vectorstore.pgvector.distance-type=cosine_distance
-spring.ai.vectorstore.pgvector.dimensions=1024
-
-# Multipart file limits
-spring.servlet.multipart.max-file-size=100MB
-spring.servlet.multipart.max-request-size=100MB
-
-# JPA
-spring.jpa.hibernate.ddl-auto=update
-
-# JWT
-jwt.secret=${JWT_SECRET:}
-```
-
-Important: spring.ai.vectorstore.pgvector.dimensions must match your embedding model dimension. The repo uses 1024 for qwen3-embedding:0.6b.
+**AI:** Ollama `qwen3-embedding:0.6b` (1024-dim) + `phi4-mini:3.8b`. Embed + chat via backend only.
 
 ---
 
-## pgvector installation (Linux / macOS, quick)
+## Prerequisites
 
-If you need to build/install the extension locally:
+- JDK 21+, Node 18+, npm, PostgreSQL 14+ with **pgvector**, Git
+- [Ollama](https://ollama.com/download) with both models pulled
 
-```bash
-# Example (Linux / macOS) — adapt for your package manager/version
-sudo apt-get install -y build-essential git postgresql-server-dev-14 make gcc
+---
 
-git clone --branch v0.8.6 https://github.com/pgvector/pgvector.git
-cd pgvector
-make
-sudo make install
+## Setup
 
-# Then in psql:
+### 1. Database
+
+```sql
+CREATE DATABASE erpdemo;
+\c erpdemo
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-On macOS you can also use Homebrew if available or use Docker images that include pgvector.
+Set secrets in the shell (do not commit them):
 
-(See demodata/pgvector-master/README.md in this repo for more details.)
+```powershell
+$env:DB_PASSWORD = "your-local-postgres-password"
+$env:JWT_SECRET = "a-long-local-development-secret"
+```
 
----
+macOS/Linux: `export DB_PASSWORD=...` and `export JWT_SECRET=...`.
 
-## Ollama (local model host)
+`src/main/resources/application.properties` (non-secrets; change if needed):
 
-Install Ollama from https://ollama.com/download, then:
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/erpdemo
+spring.datasource.username=postgres
+spring.datasource.password=${DB_PASSWORD:}
+spring.jpa.hibernate.ddl-auto=update
+jwt.secret=${JWT_SECRET:}
+spring.ai.ollama.base-url=http://localhost:11434
+spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b
+spring.ai.ollama.chat.options.model=phi4-mini:3.8b
+spring.ai.vectorstore.pgvector.initialize-schema=true
+spring.ai.vectorstore.pgvector.dimensions=1024
+```
 
-```bash
-# Start Ollama daemon
+`dimensions` must match the embedding model. After a model/dim change: `DROP TABLE IF EXISTS vector_store;` then restart.
+
+**First admin:** `/admin/register-admin` needs an ADMIN JWT. Insert one `users` row (`role = 'ADMIN'`, BCrypt password) after Hibernate creates tables, then log in.
+
+### 2. Ollama
+
+```powershell
 ollama serve
-
-# Pull the models used by this project
 ollama pull qwen3-embedding:0.6b
 ollama pull phi4-mini:3.8b
-
 ollama list
 ```
 
-Confirm `spring.ai.ollama.base-url` matches Ollama's server URL (default: http://localhost:11434).
+### 3. Backend (port 8080)
+
+```powershell
+# Windows
+.\mvnw.cmd spring-boot:run
+
+# macOS / Linux
+./mvnw spring-boot:run
+```
+
+### 4. Frontend (port 5173)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/auth`, `/admin`, `/students`, `/faculty` to `http://localhost:8080`.
+
+**RAG order:** PostgreSQL + `vector` → Ollama + models → backend → login as admin → upload PDF/DOC/DOCX → ask SHERPAL from any portal.
+
+Sample docs: [Dropbox folder](https://www.dropbox.com/scl/fo/bdknfl8ppsod4oxo0yr0k/ABAh9HgxKbn_JoPBr7YKMto?rlkey=90sya82ekh35aioqezv590atq&st=ibn4xrha&dl=0).
 
 ---
 
-## First admin user (copy-paste SQL)
+## Environment variables
 
-The README notes: "First admin must be inserted manually after Hibernate creates tables." Example:
+| Variable | Used for |
+| :--- | :--- |
+| `DB_PASSWORD` | PostgreSQL password |
+| `JWT_SECRET` | JWT signing key |
 
-1. Generate a BCrypt hash of your desired password.
-
-   Option A — Node:
-   ```js
-   // run in node
-   const bcrypt = require('bcryptjs');
-   bcrypt.hash('AdminPass123!', 10).then(h => console.log(h));
-   ```
-
-   Option B — small Java main using Spring Security's BCryptPasswordEncoder:
-   ```java
-   import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-   public class Hash {
-     public static void main(String[] a) {
-       System.out.println(new BCryptPasswordEncoder().encode("AdminPass123!"));
-     }
-   }
-   ```
-
-   Replace the password string above as needed. The output will be a $2a$... bcrypt hash.
-
-2. Insert user into `users` table (example — replace hashed password & email):
-
-```sql
-INSERT INTO users (name, email, password, role, created_at)
-VALUES ('Site Admin', 'admin@example.com', '$2a$10$EXAMPLE_BCRYPT_HASH_HERE', 'ADMIN', now());
-```
-
-After inserting, call:
-```bash
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"AdminPass123!"}'
-```
-You should receive a JSON response containing `jwt`. Use that token (Authorization: Bearer <jwt>) to call protected admin APIs.
+Gemini keys in `application.properties` are commented out (Ollama is active).
 
 ---
 
-## Common curl examples
+## Folder structure
 
-1. Login (public)
-```bash
-curl -s -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"AdminPass123!"}'
-# returns JSON { id, jwt, role, name, email }
 ```
+├  📁 .mvn
+│  └  📁 wrapper
+├  📁 .postman
+├  📁 db
+├  📁 demodata
+│  ├  📁 pgvector-master
+│  │  ├  📁 .github
+│  │  │  └  📁 workflows
+│  │  ├  📁 sql
+│  │  ├  📁 src
+│  │  ├  📁 test
+│  │  │  ├  📁 expected
+│  │  │  ├  📁 perl
+│  │  │  │  └  📁 PostgreSQL
+│  │  │  │     └  📁 Test
+│  │  │  ├  📁 sql
+│  │  │  └  📁 t
+├  📁 ForREADME
+├  📁 frontend
+│  ├  📁 public
+│  ├  📁 src
+│  │  ├  📁 components
+│  │  │  ├  📁 admin
+│  │  │  ├  📁 common
+│  │  │  ├  📁 faculty
+│  │  │  └  📁 student
+│  │  ├  📁 context
+│  │  ├  📁 hooks
+│  │  ├  📁 layouts
+│  │  ├  📁 pages
+│  │  │  ├  📁 admin
+│  │  │  ├  📁 faculty
+│  │  │  ├  📁 student
+│  │  ├  📁 routes
+│  │  ├  📁 services
+│  │  ├  📁 utils
+├  📁 postman
+│  └  📁 globals
+├  📁 src
+│  ├  📁 main
+│  │  ├  📁 java
+│  │  │  └  📁 com
+│  │  │     └  📁 chaiorcode
+│  │  │        └  📁 mycode
+│  │  │           ├  📁 config
+│  │  │           ├  📁 Controller
+│  │  │           ├  📁 DTO
+│  │  │           ├  📁 Entity
+│  │  │           ├  📁 Enum
+│  │  │           ├  📁 Repo
+│  │  │           ├  📁 security
+│  │  │           ├  📁 Service
+│  │  └  📁 resources
+│  └  📁 test
+│     └  📁 java
+│        └  📁 com
+│           └  📁 chaiorcode
+│              └  📁 mycode
+│                 ├  📁 Service
 
-2. Upload a document (admin only)
-```bash
-curl -v -X POST "http://localhost:8080/admin/upload-documents" \
-  -H "Authorization: Bearer <JWT_TOKEN>" \
-  -F "file=@/path/to/sample.pdf"
-```
-
-3. Ask SHERPAL (student endpoint example)
-```bash
-curl -s -X POST "http://localhost:8080/students/ask-to-sherpal" \
-  -H "Authorization: Bearer <JWT_TOKEN>" \
-  -H "Content-Type: text/plain" \
-  --data "What are my attendance percentages for this semester?"
-```
-
-4. Assign subject to faculty (admin)
-```bash
-curl -X POST http://localhost:8080/admin/assign-subject-to-faculty \
- -H "Authorization: Bearer <JWT_TOKEN>" \
- -H "Content-Type: application/json" \
- -d '{ "facultyId": 5, "subjectId": 10, "courseId": 2, "branchId": 1, "batchId": 3, "sectionId": 1 }'
 ```
 
 ---
 
-## RAG internals & where to look in code (important pointers)
-- Sherpal orchestration:
-  - SherpalService: src/main/java/com/chaiorcode/mycode/Service/SherpalService.java
-  - RetrievalService (search): search is called from SherpalService (look for RetrievalService implementation)
-- Document ingestion & chunking:
-  - AdminController handles file upload + calls ChunkingService + vectorStore: src/main/java/com/chaiorcode/mycode/Controller/AdminController.java
-  - ChunkingService: src/main/java/com/chaiorcode/mycode/Service/ChunkingService.java
-  - Uses Spring AI DocumentReader (PagePdfDocumentReader and TikaDocumentReader) and ChatClient to clean extracted text.
-- Vector store integration:
-  - Config is in src/main/resources/application.properties (spring.ai.vectorstore.pgvector.*)
-  - The schema initialization is controlled by spring.ai.vectorstore.pgvector.initialize-schema=true
-  - If you change embedding model/dimension: drop vector store table and reinitialize (DROP TABLE IF EXISTS vector_store;)
-- Embedding model config:
-  - spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b (default in repo)
-  - dimension used in application.properties is 1024 to match that embedding.
+## Main APIs
+
+| Method | Path | Access |
+| :--- | :--- | :--- |
+| `POST` | `/auth/login` | Public |
+| `POST` | `/admin/register-admin` `/register-faculty` `/register-student` | ADMIN |
+| `GET` | `/admin/get-all-students` `/get-student-records` `/user-options` `/get-faculty-count` `/get-departments` `/get-courses` `/get-branches` `/get-course-count` | ADMIN |
+| `PUT` | `/admin/student-update` `/faculty-update` `/change-password` | ADMIN |
+| `DELETE` | `/admin/student-delete` | ADMIN |
+| `POST` | `/admin/update_department` `/insert-course` `/subject-assignment` `/assign-subject-to-faculty` `/upload-documents` `/ask-to-sherpal` | ADMIN |
+| `GET` | `/admin/subject-assignment/{faculty,subjects,sections,batches}` | ADMIN |
+| `GET` | `/faculty/my-subjects` `/attendance/roster` `/view-profile` | FACULTY |
+| `POST` | `/faculty/attendance` `/ask-to-sherpal` | FACULTY |
+| `PUT` | `/faculty/faculty-update` `/faculty-change-password` | FACULTY |
+| `GET` | `/students/view-profile` `/attendance` | STUDENT |
+| `PUT` | `/students/update` `/student-change-password` | STUDENT |
+| `POST` | `/students/ask-to-sherpal` | STUDENT |
+
+UI routes: `/login`, `/admin/dashboard`, `/faculty/dashboard`, `/student/dashboard`, `/student/attendance`, `/student/profile`, `/student/change-password`. Extra sidebar links are marked Soon.
 
 ---
 
+## Screenshots
 
-- Create a small script to generate a BCrypt hash from the command line to simplify creating the first admin.
-- Open a PR that adds README.dev.md and links to it from README.md.
+### Login
+![Login](ForREADME/Login%20page.png)
+
+### Admin dashboard
+![Admin dashboard](ForREADME/Admin%20dashbboard.png)
+
+### SHERPAL
+![SHERPAL](ForREADME/RAG%20AI%20chatbbot.png)
+
+### Student dashboard
+![Student dashboard](ForREADME/Student%20Dashboard.png)
+
+### Student attendance
+![Student attendance](ForREADME/Student%20Attendence.png)
+
+### Database schema
+![Database schema](ForREADME/erpdemo.png)
+
+---
+
+## Not built yet
+
+- WebSocket alerts, fee payments, grade-card PDF export
+- Dedicated admin Students / Faculty / Departments pages (logic lives on the admin dashboard)
+- Faculty profile / teaching / password pages (APIs exist; attendance is on the dashboard)
+
+---
+
+## Author
+
+[Ranjeet Prajapati](https://github.com/prajapatiiranjeet) · [prajapatiiranjeet/Ai-Powered-ERP](https://github.com/prajapatiiranjeet/Ai-Powered-ERP)
