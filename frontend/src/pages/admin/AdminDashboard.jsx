@@ -3,6 +3,7 @@ import DashboardCard from '../../components/common/DashboardCard.jsx';
 import QuickActionCard from '../../components/common/QuickActionCard.jsx';
 import LoadingSpinner from '../../components/common/LoadingSpinner.jsx';
 import ErrorMessage from '../../components/common/ErrorMessage.jsx';
+import DashboardPageHeader from '../../components/common/DashboardPageHeader.jsx';
 import KnowledgeUploadPanel from '../../components/common/KnowledgeUploadPanel.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { adminService } from '../../services/adminService.js';
@@ -19,53 +20,12 @@ function UtilityIcon({ name }) {
   return <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-const departmentOptions = [
-  { id: 1, code: 'SET', name: 'School of Engineering and Technology' },
-  { id: 2, code: 'SCA', name: 'School of Computer Applications' },
-  { id: 3, code: 'SOM', name: 'School of Management' },
-  { id: 4, code: 'SOC', name: 'School of Commerce' },
-  { id: 5, code: 'SOP', name: 'School of Pharmacy' }
-];
-
-const courseOptions = [
-  { id: 1, departmentId: 1, name: 'B.Tech' },
-  { id: 2, departmentId: 1, name: 'M.Tech' },
-  { id: 3, departmentId: 2, name: 'BCA' },
-  { id: 4, departmentId: 2, name: 'MCA' },
-  { id: 5, departmentId: 3, name: 'BBA' },
-  { id: 6, departmentId: 3, name: 'MBA' },
-  { id: 7, departmentId: 4, name: 'B.Com' },
-  { id: 8, departmentId: 5, name: 'B.Pharm' }
-];
-
-const branchOptions = [
-  { id: 1, courseId: 1, name: 'Computer Science and Engineering' },
-  { id: 2, courseId: 1, name: 'Computer Science and Engineering (Data Science)' },
-  { id: 3, courseId: 1, name: 'Computer Science and Engineering (AI & ML)' },
-  { id: 4, courseId: 1, name: 'Information Technology' },
-  { id: 5, courseId: 1, name: 'Electronics and Communication Engineering' },
-  { id: 6, courseId: 1, name: 'Mechanical Engineering' },
-  { id: 7, courseId: 1, name: 'Civil Engineering' },
-  { id: 8, courseId: 2, name: 'Computer Science' },
-  { id: 9, courseId: 2, name: 'Structural Engineering' },
-  { id: 10, courseId: 3, name: 'General' },
-  { id: 11, courseId: 3, name: 'Data Analytics' },
-  { id: 12, courseId: 4, name: 'Computer Applications' },
-  { id: 13, courseId: 5, name: 'General Management' },
-  { id: 14, courseId: 5, name: 'Business Analytics' },
-  { id: 15, courseId: 6, name: 'Finance' },
-  { id: 16, courseId: 6, name: 'Marketing' },
-  { id: 17, courseId: 6, name: 'Human Resource' },
-  { id: 18, courseId: 7, name: 'Commerce' },
-  { id: 19, courseId: 8, name: 'Pharmacy' }
-];
-
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [facultyCount, setFacultyCount] = useState(0);
-  const [departments, setDepartments] = useState(departmentOptions);
-  const [courseCount, setCourseCount] = useState(courseOptions.length);
+  const [students, setStudents] = useState(null);
+  const [facultyCount, setFacultyCount] = useState(null);
+  const [departments, setDepartments] = useState(null);
+  const [courseCount, setCourseCount] = useState(null);
   const [courses, setCourses] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,28 +47,51 @@ export default function AdminDashboard() {
   const [userFilters, setUserFilters] = useState({ role: 'STUDENT', departmentId: '', courseId: '', branchId: '', batchId: '', sectionId: '' });
   const [utilityForm, setUtilityForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '', address: '', semester: '', specialization: '', departmentId: '', departmentName: '' });
 
+  const loadDashboard = async () => {
+    setLoading(true);
+    setErr('');
+    const requests = await Promise.allSettled([
+      adminService.getAllStudents(),
+      adminService.getFacultyCount(),
+      adminService.getDepartments(),
+      adminService.getCourseCount()
+    ]);
+    const failures = [];
+    const [studentsResult, facultyResult, departmentsResult, coursesResult] = requests;
+
+    if (studentsResult.status === 'fulfilled' && Array.isArray(studentsResult.value)) setStudents(studentsResult.value);
+    else { setStudents(null); failures.push(`Students: ${studentsResult.status === 'rejected' ? studentsResult.reason?.message : 'The server returned an unexpected response.'}`); }
+
+    const readCount = (result, keys = []) => {
+      if (result.status !== 'fulfilled') return null;
+      const raw = result.value;
+      const candidate = raw && typeof raw === 'object' ? keys.map((key) => raw[key]).find((value) => value !== undefined && value !== null) : raw;
+      if (candidate === undefined || candidate === null || (typeof candidate === 'string' && !candidate.trim())) return null;
+      const count = Number(candidate);
+      return Number.isFinite(count) && count >= 0 ? count : null;
+    };
+    const facultyValue = readCount(facultyResult, ['count', 'facultyCount', 'total']);
+    if (facultyValue === null) { setFacultyCount(null); failures.push(`Faculty: ${facultyResult.status === 'rejected' ? facultyResult.reason?.message : 'The server returned an unexpected count.'}`); }
+    else setFacultyCount(facultyValue);
+
+    if (departmentsResult.status === 'fulfilled' && Array.isArray(departmentsResult.value)) setDepartments(departmentsResult.value);
+    else { setDepartments(null); failures.push(`Departments: ${departmentsResult.status === 'rejected' ? departmentsResult.reason?.message : 'The server returned an unexpected response.'}`); }
+
+    const courseValue = readCount(coursesResult, ['count', 'courseCount', 'total']);
+    if (courseValue === null) { setCourseCount(null); failures.push(`Courses: ${coursesResult.status === 'rejected' ? coursesResult.reason?.message : 'The server returned an unexpected count.'}`); }
+    else setCourseCount(courseValue);
+
+    setErr(failures.join(' · '));
+    setLoading(false);
+  };
+
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [studentsResult, facultyResult, departmentsResult, coursesResult] = await Promise.allSettled([
-          adminService.getAllStudents(),
-          adminService.getFacultyCount(),
-          adminService.getDepartments(),
-          adminService.getCourseCount()
-        ]);
-        if (active) {
-          if (studentsResult.status === 'fulfilled') setStudents(Array.isArray(studentsResult.value) ? studentsResult.value : []);
-          if (facultyResult.status === 'fulfilled') {
-            const rawVal = facultyResult.value;
-            const parsedCount = typeof rawVal === 'number' ? rawVal : (typeof rawVal === 'object' && rawVal !== null ? Number(rawVal.count || rawVal.facultyCount || rawVal.total || 0) : Number(rawVal) || 0);
-            setFacultyCount(parsedCount);
-          }
-          if (departmentsResult.status === 'fulfilled') setDepartments(Array.isArray(departmentsResult.value) && departmentsResult.value.length > 0 ? departmentsResult.value : departmentOptions);
-          if (coursesResult.status === 'fulfilled') setCourseCount(Number(coursesResult.value) || courseOptions.length);
-        }
-      } catch (e) {
-        if (active) setErr(e?.message || 'Could not load dashboard data');
+        await loadDashboard();
+      } catch (error) {
+        if (active) setErr(error?.message || 'Could not load dashboard data. Please retry.');
       } finally {
         if (active) setLoading(false);
       }
@@ -168,7 +151,7 @@ export default function AdminDashboard() {
       setDepartmentForm({ name: '' });
       try {
         const fetchedDepts = await adminService.getDepartments();
-        if (Array.isArray(fetchedDepts) && fetchedDepts.length > 0) {
+        if (Array.isArray(fetchedDepts)) {
           setDepartments(fetchedDepts);
         }
       } catch (_e) {
@@ -190,7 +173,7 @@ export default function AdminDashboard() {
   const openCourseModal = () => {
     setCourseError('');
     setCourseSuccess('');
-    setCourseForm({ name: '', duration: 4, departmentId: departments[0]?.id ? String(departments[0].id) : '1' });
+    setCourseForm({ name: '', duration: 4, departmentId: departments?.[0]?.id ? String(departments[0].id) : '' });
     setShowCourseModal(true);
   };
 
@@ -212,7 +195,7 @@ export default function AdminDashboard() {
       setCourseCount((prev) => prev + 1);
       const refreshedCourses = await adminService.getCourses(deptId);
       setCourses(Array.isArray(refreshedCourses) ? refreshedCourses : []);
-      setCourseForm({ name: '', duration: 4, departmentId: departments[0]?.id ? String(departments[0].id) : '1' });
+      setCourseForm({ name: '', duration: 4, departmentId: departments?.[0]?.id ? String(departments[0].id) : '' });
     } catch (error) {
       setCourseError(error?.message || 'Failed to insert course into database');
     } finally {
@@ -402,7 +385,7 @@ export default function AdminDashboard() {
           if (num > 0) setFacultyCount(num);
         }).catch(() => {});
       } else if (registrationRole === 'STUDENT') {
-        setStudents((prev) => [...prev, result?.name || payload.name]);
+        setStudents((prev) => [...(prev ?? []), result?.name || payload.name]);
       }
       setRegistrationForm({ name: '', email: '', password: '', departmentId: '', courseId: '', branchId: '', gender: 'MALE', designation: 'LECTURER' });
     } catch (error) {
@@ -413,32 +396,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Welcome banner — slim section header style */}
-      <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 md:px-5 md:py-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {today}
-            </p>
-            <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white md:text-xl">
-              Welcome back, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'}
-            </h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300">
-              Administrator access
-            </span>
-          </div>
-        </div>
-      </div>
+    <div className="dashboard-page dashboard-admin">
+      <DashboardPageHeader
+        eyebrow="University operations"
+        title={`Welcome back, ${user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin'}`}
+        description="Review enrollment, faculty, departments, and courses, then move directly into the work that keeps campus records current."
+        meta={<time className="dashboard-context-pill">{today}</time>}
+      />
+
+      {err ? <ErrorMessage message={err} onRetry={loadDashboard} /> : null}
 
       {/* Stat cards — Institution overview */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
-          Institution overview
-        </h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="dashboard-section-heading"><div><h2 id="admin-overview-title">Institution overview</h2><p>Current counts from academic and user records.</p></div></div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="erp-stat-card border-slate-200 animate-pulse">
@@ -451,9 +422,9 @@ export default function AdminDashboard() {
             <>
               <DashboardCard
                 title="Total Students"
-                value={students.length}
+                value={students?.length ?? '—'}
                 accent="purple"
-                description="Registered in the university portal"
+                description={students === null ? 'Student data unavailable' : students.length === 0 ? 'No students registered yet' : 'Registered in the university portal'}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -463,9 +434,9 @@ export default function AdminDashboard() {
               />
               <DashboardCard
                 title="Faculty Members"
-                value={facultyCount}
+                value={facultyCount ?? '—'}
                 accent="teal"
-                description="Registered faculty members"
+                description={facultyCount === null ? 'Faculty data unavailable' : facultyCount === 0 ? 'No faculty members yet' : 'Registered faculty members'}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -477,9 +448,9 @@ export default function AdminDashboard() {
               />
               <DashboardCard
                 title="Departments"
-                value={departments.length}
+                value={departments?.length ?? '—'}
                 accent="blue"
-                description={departments.map((d) => d.code || d.name).slice(0, 5).join(', ')}
+                description={departments ? (departments.length ? departments.map((d) => d.code || d.name).slice(0, 5).join(', ') : 'No departments yet') : 'Could not load departments'}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 21h18" />
@@ -490,9 +461,9 @@ export default function AdminDashboard() {
               />
               <DashboardCard
                 title="Active Courses"
-                value={courseCount}
+                value={courseCount ?? '—'}
                 accent="amber"
-                description="Courses in academic catalog"
+                description={courseCount === null ? 'Course data unavailable' : courseCount === 0 ? 'No courses in the catalog yet' : 'Courses in academic catalog'}
                 icon={
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -634,7 +605,7 @@ export default function AdminDashboard() {
                       }}
                     >
                       <option value="">Choose department</option>
-                      {departments.map((department) => (
+                      {(departments ?? []).map((department) => (
                         <option key={department.id} value={department.id}>{department.code} - {department.name}</option>
                       ))}
                     </select>
@@ -761,7 +732,7 @@ export default function AdminDashboard() {
                   onChange={(event) => setCourseForm({ ...courseForm, departmentId: event.target.value })}
                 >
                   <option value="">Choose department</option>
-                  {departments.map((dept) => (
+                  {(departments ?? []).map((dept) => (
                     <option key={dept.id} value={dept.id}>{dept.code ? `${dept.code} - ` : ''}{dept.name}</option>
                   ))}
                 </select>
@@ -815,16 +786,16 @@ export default function AdminDashboard() {
               {utilityAction === 'department' ? (
                 <>
                   <label className="erp-label">Department<select className="erp-input mt-1" required value={utilityForm.departmentId} onChange={(event) => {
-                    const department = departments.find((item) => item.id === Number(event.target.value));
+                    const department = (departments ?? []).find((item) => item.id === Number(event.target.value));
                     setUtilityForm({ ...utilityForm, departmentId: event.target.value, departmentName: department?.name || '' });
-                  }}><option value="">Select department</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} - ` : ''}{item.name}</option>)}</select></label>
+                  }}><option value="">Select department</option>{(departments ?? []).map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} - ` : ''}{item.name}</option>)}</select></label>
                   <label className="erp-label">Department name<input className="erp-input mt-1" required value={utilityForm.departmentName} onChange={(event) => setUtilityForm({ ...utilityForm, departmentName: event.target.value })} /></label>
                 </>
               ) : (
                 <>
                   <label className="erp-label">User type<select className="erp-input mt-1" value={userFilters.role} onChange={(event) => updateUserFilter('role', event.target.value)}><option value="STUDENT">Student</option><option value="FACULTY">Faculty</option><option value="ADMIN">Admin</option></select></label>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="erp-label">Department<select className="erp-input mt-1" value={userFilters.departmentId} onChange={(event) => updateUserFilter('departmentId', event.target.value)}><option value="">All departments</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                    <label className="erp-label">Department<select className="erp-input mt-1" value={userFilters.departmentId} onChange={(event) => updateUserFilter('departmentId', event.target.value)}><option value="">All departments</option>{(departments ?? []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
                     <label className="erp-label">Course<select className="erp-input mt-1" value={userFilters.courseId} onChange={(event) => updateUserFilter('courseId', event.target.value)} disabled={!userFilters.departmentId}><option value="">{userFilters.departmentId ? 'All courses' : 'Select department first'}</option>{userCourses.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
                     <label className="erp-label">Branch<select className="erp-input mt-1" value={userFilters.branchId} onChange={(event) => updateUserFilter('branchId', event.target.value)} disabled={!userFilters.courseId}><option value="">{userFilters.courseId ? 'All branches' : 'Select course first'}</option>{userBranches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
                     <label className="erp-label">Batch<select className="erp-input mt-1" value={userFilters.batchId} onChange={(event) => updateUserFilter('batchId', event.target.value)}><option value="">All batches</option>{userBatches.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>

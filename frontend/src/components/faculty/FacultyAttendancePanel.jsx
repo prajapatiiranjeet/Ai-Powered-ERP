@@ -15,6 +15,7 @@ export default function FacultyAttendancePanel() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
     // First load the faculty's own offerings for the subject/section dropdown.
@@ -26,7 +27,7 @@ export default function FacultyAttendancePanel() {
       })
       .catch((err) => setError(err.message || 'Unable to load teaching assignments'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [retryNonce]);
 
   useEffect(() => {
     // Changing the offering or date reloads the roster and existing statuses.
@@ -42,7 +43,7 @@ export default function FacultyAttendancePanel() {
       })
       .catch((err) => setError(err.message || 'Unable to load attendance roster'))
       .finally(() => setRosterLoading(false));
-  }, [offeringId, date]);
+  }, [offeringId, date, retryNonce]);
 
   const saveAttendance = async () => {
     // Submit one complete roster so the backend can validate every student together.
@@ -125,9 +126,10 @@ export default function FacultyAttendancePanel() {
         </div>
       </div>
 
-      {error ? <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">{error}</p> : null}
+      {error ? <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200" role="alert"><span>{error}</span><button type="button" className="erp-btn-secondary min-h-9 px-3 py-1.5 text-xs" onClick={() => { setError(''); setRetryNonce((value) => value + 1); }}>Retry</button></div> : null}
       {success ? <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-800/70 dark:bg-emerald-950/60 dark:text-emerald-300">{success}</p> : null}
-      {rosterLoading ? <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">Loading roster...</p> : null}
+      {rosterLoading ? <div className="mt-6 grid gap-2" role="status" aria-label="Loading attendance roster">{Array.from({ length: 4 }, (_, index) => <div key={index} className="grid min-h-14 grid-cols-[1fr_7rem_9rem] items-center gap-4 rounded-lg border border-slate-100 px-3 dark:border-slate-800"><span className="h-3 w-36 max-w-full animate-pulse rounded bg-slate-200 dark:bg-slate-700"/><span className="h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800"/><span className="h-9 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800"/></div>)}<span className="sr-only">Loading roster</span></div> : null}
+{!loading && !error && offerings.length === 0 ? <div className="dashboard-empty mt-5"><p className="font-semibold text-slate-800 dark:text-slate-100">No teaching assignments found</p><p className="mt-1">Assignments appear here when they have been linked to your faculty account.</p></div> : null}
       {!rosterLoading && offeringId && roster.length === 0 ? <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">No students are assigned to this section.</p> : null}
       {roster.length > 0 ? (
         <div className="mt-6 overflow-x-auto">

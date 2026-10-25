@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { studentService } from '../../services/studentService.js';
+import ErrorMessage from '../common/ErrorMessage.jsx';
+import LoadingSpinner from '../common/LoadingSpinner.jsx';
 
 const statusStyles = {
   PRESENT: 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60',
@@ -20,12 +22,22 @@ export default function StudentAttendancePanel() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    studentService.getAttendance()
-      .then((data) => setReport(data && !Array.isArray(data) ? data : null))
-      .catch((err) => setError(err.message || 'Unable to load attendance'));
-  }, []);
+  const loadAttendance = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await studentService.getAttendance();
+      setReport(data && !Array.isArray(data) ? data : null);
+    } catch (err) {
+      setError(err.message || 'Unable to load attendance. Please retry.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadAttendance(); }, []);
 
   const records = useMemo(() => (report?.records || []).filter((record) => (
     (subjectFilter === 'ALL' || String(record.offeringId) === subjectFilter)
@@ -47,9 +59,10 @@ export default function StudentAttendancePanel() {
       </div>
 
       <div className="px-5 py-5 md:px-6">
-        {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300">{error}</p> : null}
-        {!error && !report ? <p className="text-sm text-slate-500 dark:text-slate-400">No attendance records found.</p> : null}
-        {report ? (
+        {loading ? <div className="flex min-h-36 items-center justify-center"><LoadingSpinner label="Loading attendance…" /></div> : null}
+        {!loading && error ? <ErrorMessage message={error} onRetry={loadAttendance} /> : null}
+        {!loading && !error && !report ? <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm text-slate-600">No attendance records are available yet.</p> : null}
+        {!loading && report ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Metric label="No. of Classes" value={report.noOfClasses} />

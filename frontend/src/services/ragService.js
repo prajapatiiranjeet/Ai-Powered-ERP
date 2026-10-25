@@ -14,7 +14,8 @@ export const ragService = {
     return apiRequest(endpoint, {
       method: 'POST',
       body: question,
-      headers: { 'Content-Type': 'text/plain' }
+      headers: { 'Content-Type': 'text/plain' },
+      timeoutMs: 120000
     });
   },
 
@@ -26,7 +27,8 @@ export const ragService = {
     formData.append('file', file);
     return apiRequest('/admin/upload-documents', {
       method: 'POST',
-      body: formData
+      body: formData,
+      timeoutMs: 120000
     });
   }
 };

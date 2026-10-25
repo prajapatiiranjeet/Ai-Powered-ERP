@@ -4,21 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/Mainlogoerp.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Innovation University ERP</title>
+    <meta name="theme-color" content="#f5f7f5" />
+    <meta name="description" content="The New Innovation University campus portal for students, faculty, and administrators." />
     <script>
-      (function () {
+      (() => {
         try {
-          var stored = localStorage.getItem('erp-theme');
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var useDark = stored ? stored === 'dark' : prefersDark;
-          if (useDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        } catch (e) {}
+          const saved = localStorage.getItem('niu-theme');
+          const dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch { document.documentElement.dataset.theme = 'light'; }
       })();
     </script>
+    <title>NIU Campus Portal</title>
   </head>
   <body>
     <div id="root"></div>

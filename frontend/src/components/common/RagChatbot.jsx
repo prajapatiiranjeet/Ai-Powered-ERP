@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ragService } from '../../services/ragService.js';
 
-const LION_URL = 'https://cdn-icons-png.flaticon.com/512/4081/4081582.png';
 const roleLabels = { ADMIN: 'Admin', FACULTY: 'Faculty', STUDENT: 'Student' };
 const quickPrompts = [
   'Exam Schedule & Syllabus',
@@ -37,30 +36,7 @@ function Icon({ name, size = 17 }) {
 }
 
 function SherpalAvatar({ size = 32 }) {
-  return (
-    <span
-      className="relative grid flex-shrink-0 place-items-center overflow-hidden rounded-2xl"
-      style={{
-        width: size,
-        height: size,
-        background:
-          'radial-gradient(circle at 30% 28%, rgba(52,211,153,0.55) 0%, rgba(16,185,129,0.28) 36%, rgba(4,47,35,0.92) 76%, rgba(2,20,15,1) 100%)'
-      }}
-    >
-      <img
-        src={LION_URL}
-        alt=""
-        aria-hidden="true"
-        style={{
-          width: Math.round(size * 0.78),
-          height: Math.round(size * 0.78),
-          objectFit: 'cover',
-          filter:
-            'saturate(1.05) contrast(1.02) brightness(0.98) drop-shadow(0 1px 0 rgba(255,255,255,0.12)) drop-shadow(0 3px 6px rgba(0,0,0,0.55))'
-        }}
-      />
-    </span>
-  );
+  return <span className="sherpal-mark" style={{ width: size, height: size }} aria-hidden="true">S</span>;
 }
 
 function formatInline(text, keyPrefix = '') {
@@ -365,194 +341,36 @@ export default function RagChatbot({ role = 'STUDENT' }) {
 
   return (
     <>
-      <style>{`
-        @keyframes sherpalMessage { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes sherpalDot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
-        @keyframes sherpalAvatarPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.35); } 50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); } }
-        .sherpal-widget * { box-sizing: border-box; font-family: inherit; }
-        .sherpal-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(8, 25, 18, .28); backdrop-filter: blur(2px); }
-        html.dark .sherpal-backdrop { background: rgba(4, 15, 12, .52); }
-        .sherpal-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .sherpal-scroll::-webkit-scrollbar-track { background: rgba(18,84,79,.12); border-radius: 999px; }
-        .sherpal-scroll::-webkit-scrollbar-thumb { background: rgba(16,185,129,.5); border-radius: 99px; }
-        html.dark .sherpal-scroll::-webkit-scrollbar-thumb { background: rgba(52,211,153,.55); }
-        .sherpal-message { animation: sherpalMessage 150ms ease both; }
-        .sherpal-chip { flex: 0 0 auto; transition: background 150ms ease, color 150ms ease, transform 150ms ease, border-color 150ms ease; }
-        .sherpal-chip:hover { background: rgba(16,185,129,.12) !important; color: #047857 !important; border-color: rgba(16,185,129,.4) !important; }
-        html.dark .sherpal-chip:hover { background: rgba(16,185,129,.18) !important; color: #6ee7b7 !important; border-color: rgba(52,211,153,.45) !important; }
-        .sherpal-launcher { transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease; animation: sherpalAvatarPulse 2.6s ease-in-out infinite; }
-        .sherpal-launcher:hover { transform: translateY(-1px) scale(1.02); filter: saturate(1.05); }
-        .sherpal-typing-dot { animation: sherpalDot 900ms ease-in-out infinite; background: #fbbf24; }
-        html.dark .sherpal-typing-dot { background: #fcd34d; }
-        @media (max-width: 767px) {
-          .sherpal-backdrop { background: rgba(8, 25, 18, .42); }
-          .sherpal-launcher { right: 16px !important; bottom: 16px !important; width: 54px !important; height: 54px !important; }
-          .sherpal-widget { inset: 0 !important; width: 100vw !important; height: 100dvh !important; max-height: none !important; border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; }
-          .sherpal-widget .sherpal-scroll { overscroll-behavior: contain; }
-        }
-      `}</style>
-
-      {!visible && (
-        <button
-          type="button"
-          className="sherpal-launcher fixed z-[60] flex items-center justify-center"
-          onClick={openWidget}
-          aria-label="Open SHERPAL AI"
-          style={{
-            right: DEFAULT_WIDGET_OFFSET.right,
-            bottom: DEFAULT_WIDGET_OFFSET.bottom,
-            width: 60,
-            height: 60,
-            padding: 4
-          }}
-        >
-          <SherpalAvatar size={52} />
-        </button>
-      )}
-
+      {!visible && <button type="button" className="sherpal-launcher fixed z-[60]" onClick={openWidget} aria-label="Open SHERPAL AI" style={{ right: DEFAULT_WIDGET_OFFSET.right, bottom: DEFAULT_WIDGET_OFFSET.bottom }}><SherpalAvatar size={46} /></button>}
       {visible && <div className="sherpal-backdrop" aria-hidden="true" />}
-
-      {visible && (
-        <section
-          ref={widgetRef}
-          className="sherpal-widget fixed z-[60] flex flex-col overflow-hidden rounded-[22px] border border-emerald-700/30 bg-white text-slate-900 shadow-[0_22px_70px_rgba(0,0,0,.28)] backdrop-blur-xl dark:border-emerald-500/30 dark:bg-[#0a1d18] dark:text-slate-100 dark:shadow-[0_22px_70px_rgba(0,0,0,.6)]"
-          aria-label="SHERPAL AI Assistant"
-          style={{
-            ...widgetPositionStyle,
-            width: `min(${clampedSize.width}px, calc(100vw - 32px))`,
-            height: minimized ? 68 : `min(${clampedSize.height}px, calc(100vh - 32px))`,
-            opacity: open ? 1 : 0,
-            transform: open ? 'scale(1)' : 'scale(.92)',
-            pointerEvents: open ? 'auto' : 'none',
-            transition: isDragging || isResizing ? 'none' : 'opacity 280ms ease, transform 280ms ease, box-shadow 200ms ease'
-          }}
-        >
-          {!minimized && (
-            <button
-              type="button"
-              aria-label="Resize SHERPAL AI"
-              onPointerDown={startResize}
-              className="absolute left-0.5 top-0.5 z-[2] grid h-[25px] w-[25px] place-items-center rounded-md border-0 bg-transparent p-0 text-emerald-800/70 hover:bg-white/30 dark:text-emerald-300/70 dark:hover:bg-white/5 cursor-nw-resize"
-            >
-              <Icon name="grip" size={18} />
-            </button>
-          )}
-
-          <header
-            onPointerDown={startDrag}
-            className="flex min-h-[68px] items-center justify-between gap-2.5 border-b border-emerald-700/25 bg-[linear-gradient(180deg,rgba(8,48,36,0.98),rgba(5,32,24,0.98))] px-4 py-2.5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),inset_0_-1px_0_rgba(0,0,0,0.28)] select-none dark:border-emerald-400/20"
-            style={{ cursor: minimized ? 'default' : (isDragging ? 'grabbing' : 'grab') }}
-          >
-            <div className="flex min-w-0 items-center gap-2.5">
-              <SherpalAvatar size={36} />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <strong className="truncate text-[14px] tracking-[.08em] text-white">SHERPAL AI</strong>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/30 bg-emerald-400/10 px-1.5 py-[1px] text-[9px] font-bold tracking-[.08em] text-emerald-100 ring-1 ring-emerald-300/10">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_6px_rgba(110,231,183,0.9)]" />
-                    RAG
-                  </span>
-                </div>
-                <p className="mt-0.5 truncate text-[11px] text-emerald-100/85">
-                  New Innovation University assistant for {roleLabels[role] || role} users.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-shrink-0 items-center gap-1">
-              <ControlButton label={soundEnabled ? 'Mute sound' : 'Enable sound'} onClick={() => setSoundEnabled((current) => !current)}>
-                <Icon name={soundEnabled ? 'sound' : 'mute'} />
-              </ControlButton>
-              {!minimized && (
-                <ControlButton label="Clear chat" onClick={clearChat}>
-                  <Icon name="trash" />
-                </ControlButton>
-              )}
-              <ControlButton label={minimized ? 'Expand chat' : 'Minimize chat'} onClick={() => setMinimized((current) => !current)}>
-                <Icon name={minimized ? 'plus' : 'minus'} />
-              </ControlButton>
-              <ControlButton label="Close chat" onClick={closeWidget}>
-                <Icon name="close" />
-              </ControlButton>
-            </div>
-          </header>
-
-          {!minimized && (
-            <>
-              <div
-                ref={messagesRef}
-                className="sherpal-scroll flex-1 min-h-0 overflow-y-auto bg-slate-50 px-3.5 py-4 dark:bg-[#081914]"
-              >
-                {messages.map((message) => (
-                  <article key={message.id} className="sherpal-message mb-3 flex" style={{ justifyContent: message.from === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '84%', display: 'flex', flexDirection: 'column', alignItems: message.from === 'user' ? 'flex-end' : 'flex-start' }}>
-                      {message.from === 'user' ? (
-                        <div className="rounded-2xl rounded-br-[5px] bg-gradient-to-br from-[#2d6a3f] to-[#1f5835] px-3.5 py-2.5 text-[13px] leading-snug font-medium text-white shadow shadow-emerald-900/10 break-words">
-                          {formatMessage(message.text)}
-                        </div>
-                      ) : (
-                        <div className="rounded-2xl rounded-bl-[5px] border border-slate-200 bg-white px-3.5 py-2.5 text-[13px] leading-snug font-medium text-slate-800 shadow-sm break-words dark:border-slate-700/80 dark:bg-slate-900 dark:text-slate-100">
-                          {formatMessage(message.text)}
-                        </div>
-                      )}
-                      <time className="mt-1 px-1 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {message.time}
-                      </time>
-                    </div>
-                  </article>
-                ))}
-                {isTyping && (
-                  <div className="flex w-fit gap-1.5 rounded-2xl rounded-bl-[5px] border border-slate-200 bg-slate-100 px-3.5 py-3 dark:border-slate-700/70 dark:bg-slate-800/80">
-                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '0ms' }} />
-                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '120ms' }} />
-                    <span className="sherpal-typing-dot h-1.5 w-1.5 rounded-full" style={{ animationDelay: '240ms' }} />
-                  </div>
-                )}
-              </div>
-
-              {!question.trim() && (
-                <div className="sherpal-scroll flex gap-1.5 overflow-x-auto border-t border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700/80 dark:bg-slate-950">
-                  {quickPrompts.map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      className="sherpal-chip rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap text-slate-700 hover:border-emerald-500/50 hover:bg-emerald-50 hover:text-emerald-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                      onClick={() => handleSend(prompt)}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <form
-                onSubmit={(event) => { event.preventDefault(); handleSend(); }}
-                className="border-t border-slate-200 bg-white px-3 py-3 dark:border-slate-700/80 dark:bg-slate-950"
-              >
-                <div className="flex items-end gap-2 rounded-2xl border border-slate-300 bg-slate-50 p-1.5 shadow-sm dark:border-slate-600 dark:bg-slate-900">
-                  <textarea
-                    ref={textareaRef}
-                    rows={1}
-                    value={question}
-                    onChange={updateQuestion}
-                    disabled={isTyping}
-                    placeholder="Type your message to Sherpal AI..."
-                    onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleSend(); } }}
-                    className="min-h-[30px] flex-1 resize-none bg-transparent px-2 py-1.5 text-[13px] leading-snug font-medium text-slate-900 placeholder:text-slate-500 outline-none dark:text-slate-100 dark:placeholder:text-slate-400"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!question.trim() || isTyping}
-                    aria-label="Send message"
-                    className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2d6a3f] to-[#164c2b] text-white shadow-sm transition-transform hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100"
-                  >
-                    <Icon name="send" size={18} />
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
-        </section>
-      )}
+      {visible && <section ref={widgetRef} className="sherpal-widget fixed z-[60]" role="dialog" aria-modal="true" aria-labelledby="sherpal-title"
+        style={{ ...widgetPositionStyle, width:'min(' + clampedSize.width + 'px, calc(100vw - 32px))', height:minimized ? 76 : 'min(' + clampedSize.height + 'px, calc(100vh - 32px))', opacity:open ? 1 : 0, transform:open ? 'translateY(0) scale(1)' : 'translateY(8px) scale(.985)', pointerEvents:open ? 'auto' : 'none', transition:isDragging || isResizing ? 'none' : 'opacity 180ms ease, transform 180ms ease' }}>
+        {!minimized && <button type="button" aria-label="Resize SHERPAL AI" onPointerDown={startResize} className="sherpal-resize"><Icon name="grip" size={15} /></button>}
+        <header onPointerDown={startDrag} className="sherpal-head" style={{ cursor:minimized ? 'default' : isDragging ? 'grabbing' : 'grab' }}>
+          <div className="sherpal-head__identity"><SherpalAvatar size={40} /><div className="min-w-0"><p id="sherpal-title" className="sherpal-head__name">SHERPAL AI</p><p className="sherpal-head__context">Campus assistant · {roleLabels[role] || role} workspace</p></div></div>
+          <div className="sherpal-head__controls">
+            <ControlButton label={soundEnabled ? 'Mute sound' : 'Enable sound'} onClick={() => setSoundEnabled((current) => !current)}><Icon name={soundEnabled ? 'sound' : 'mute'} /></ControlButton>
+            {!minimized && <ControlButton label="Clear chat" onClick={clearChat}><Icon name="trash" /></ControlButton>}
+            <ControlButton label={minimized ? 'Expand chat' : 'Minimize chat'} onClick={() => setMinimized((current) => !current)}><Icon name={minimized ? 'plus' : 'minus'} /></ControlButton>
+            <ControlButton label="Close chat" onClick={closeWidget}><Icon name="close" /></ControlButton>
+          </div>
+        </header>
+        {!minimized && <>
+          <div className="sherpal-status"><span className="sherpal-status__dot" aria-hidden="true" />Ask about university information</div>
+          <div ref={messagesRef} className="sherpal-scroll sherpal-transcript" aria-live="polite" aria-relevant="additions text">
+            {messages.map((message) => <article key={message.id} className={'sherpal-message' + (message.from === 'user' ? ' sherpal-message--user' : '')}>
+              {message.from !== 'user' && <SherpalAvatar size={25} />}
+              <div className="sherpal-message__stack"><div className="sherpal-message__bubble">{formatMessage(message.text)}</div><time className="sherpal-message__time">{message.time}</time></div>
+            </article>)}
+            {isTyping && <div className="sherpal-typing" role="status" aria-label="SHERPAL is responding"><span style={{ animationDelay:'0ms' }} /><span style={{ animationDelay:'120ms' }} /><span style={{ animationDelay:'240ms' }} /></div>}
+          </div>
+          {!question.trim() && <div className="sherpal-scroll sherpal-suggestions" aria-label="Suggested questions">{quickPrompts.map((prompt) => <button key={prompt} type="button" className="sherpal-chip" onClick={() => handleSend(prompt)}>{prompt}</button>)}</div>}
+          <form onSubmit={(event) => { event.preventDefault(); handleSend(); }} className="sherpal-composer">
+            <div className="sherpal-composer__row"><textarea ref={textareaRef} rows={1} value={question} onChange={updateQuestion} disabled={isTyping} placeholder="Ask SHERPAL about campus…" aria-label="Message SHERPAL AI" onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleSend(); } }} /><button type="submit" disabled={!question.trim() || isTyping} aria-label="Send message" className="sherpal-send"><Icon name="send" size={17} /></button></div>
+            <p className="sherpal-composer__hint">Enter to send · Shift + Enter for a new line</p>
+          </form>
+        </>}
+      </section>}
     </>
   );
 }
@@ -564,7 +382,7 @@ function ControlButton({ label, onClick, children }) {
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="grid h-7 w-7 place-items-center rounded-md border-0 bg-transparent p-0 text-white/88 transition hover:bg-white/15 hover:text-white active:scale-95"
+      className="sherpal-control"
     >
       {children}
     </button>
