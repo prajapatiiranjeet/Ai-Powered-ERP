@@ -238,24 +238,35 @@ UI routes: `/login`, `/admin/dashboard`, `/faculty/dashboard`, `/student/dashboa
 
 ## Screenshots
 
-### Login
-![Login](ForREADME/Login%20page.png)
+The screenshots below show the current portal UI in both light and dark themes. They are representative interface views; names, counts, and attendance values are sample account data.
 
-### Admin dashboard
-![Admin dashboard](ForREADME/Admin%20dashbboard.png)
+### Sign-in — light theme
+The entry point for university users. Users sign in with their university email and password before the application routes them to the workspace allowed by their role.
 
-### SHERPAL
-![SHERPAL](ForREADME/RAG%20AI%20chatbbot.png)
+![New Innovation University portal sign-in screen in light theme](ForREADME/login-portal-light.png)
 
-### Student dashboard
-![Student dashboard](ForREADME/Student%20Dashboard.png)
+### Admin workspace — dark theme
+The admin overview puts institution-wide student, faculty, department, and course counts above management actions and administrative utilities.
 
-### Student attendance
-![Student attendance](ForREADME/Student%20Attendence.png)
+![Admin dashboard in dark theme showing institution metrics and management shortcuts](ForREADME/admin-dashboard-dark.png)
+
+### Student workspace — dark theme
+The student landing page summarizes enrollment context and attendance progress, then links to frequent tasks such as attendance history, profile, and account security.
+
+![Student dashboard in dark theme showing academic context, attendance progress, and next steps](ForREADME/student-dashboard-dark.png)
+
+### Student attendance — dark theme
+The attendance view presents class totals and status counts above subject-level records, including present, absent, leave, and percentage values.
+
+![Student attendance page in dark theme with summary metrics and subject records](ForREADME/student-attendance-dark.png)
+
+### SHERPAL campus assistant — dark theme
+The floating assistant provides a conversation area, suggested campus questions, and a message composer for asking about university information.
+
+![SHERPAL AI chatbot in dark theme with suggested questions and a message composer](ForREADME/sherpal-assistant-dark.png)
 
 ### Database schema
 ![Database schema](ForREADME/erpdemo.png)
-
 ---
 
 ## Not built yet
