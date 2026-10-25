@@ -254,7 +254,6 @@ public class AuthService {
         // token ke form me aayega.
         String jwtToken = jwtService
                 .generatJwttoken((UserDetails) Objects.requireNonNull(authentication.getPrincipal()));
-        System.out.println(jwtToken);
         String roleStr = user.getRole() != null ? user.getRole().name() : "STUDENT";
         if ("STUDENTS".equalsIgnoreCase(roleStr)) {
             roleStr = "STUDENT";

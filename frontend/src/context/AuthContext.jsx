@@ -1,56 +1,52 @@
-import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService.js';
-import { STORAGE_KEYS, ROLES, ROLE_DEFAULT_ROUTE } from '../utils/constants.js';
+import { ROLE_DEFAULT_ROUTE, STORAGE_KEYS, normalizeRole } from '../utils/constants.js';
 import { isTokenValid } from '../utils/jwt.js';
 
 const AuthContext = createContext(null);
+const initialState = { user: null, loading: true, isAuthenticated: false };
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({
-    user: null,
-    loading: true,
-    isAuthenticated: false
-  });
+  const [state, setState] = useState(initialState);
 
   const hydrateFromStorage = useCallback(() => {
-    const auth = authService.getStoredAuth();
-    if (!auth?.token || !isTokenValid(auth.token)) {
-      authService.logout();
-      setState({ user: null, loading: false, isAuthenticated: false });
-      return;
-    }
-    setState({
-      user: {
-        id: auth.userId,
-        email: auth.email,
-        role: auth.role,
-        name: auth.name
-      },
-      loading: false,
-      isAuthenticated: true
-    });
-  }, []);
-
-  useEffect(() => {
-    hydrateFromStorage();
-  }, [hydrateFromStorage]);
-
-  const login = useCallback(async (email, password) => {
-    setState((s) => ({ ...s, loading: true }));
     try {
-      const { id, role } = await authService.login(email, password);
-      const storedEmail = localStorage.getItem(STORAGE_KEYS.EMAIL);
-      const storedName = localStorage.getItem(STORAGE_KEYS.NAME);
+      const auth = authService.getStoredAuth();
+      if (!auth?.token || !isTokenValid(auth.token) || !auth.role) {
+        authService.logout();
+        setState({ user: null, loading: false, isAuthenticated: false });
+        return;
+      }
       setState({
-        user: { id: String(id), email: storedEmail, role, name: storedName },
+        user: { id: auth.userId, email: auth.email, role: auth.role, name: auth.name },
         loading: false,
         isAuthenticated: true
       });
-      return role;
-    } catch (err) {
+    } catch {
       authService.logout();
       setState({ user: null, loading: false, isAuthenticated: false });
-      throw err;
+    }
+  }, []);
+
+  useEffect(() => { hydrateFromStorage(); }, [hydrateFromStorage]);
+
+  const login = useCallback(async (email, password) => {
+    setState((current) => ({ ...current, loading: true }));
+    try {
+      const { id, role } = await authService.login(email, password);
+      const user = {
+        id: id === null || id === undefined ? null : String(id),
+        email: localStorage.getItem(STORAGE_KEYS.EMAIL),
+        role: normalizeRole(role),
+        name: localStorage.getItem(STORAGE_KEYS.NAME)
+      };
+      if (!user.role) throw new Error('The server did not return a recognized account role. Please contact your administrator.');
+      setState({ user, loading: false, isAuthenticated: true });
+      return user.role;
+    } catch (error) {
+      authService.logout();
+      setState({ user: null, loading: false, isAuthenticated: false });
+      throw error;
     }
   }, []);
 
@@ -64,24 +60,21 @@ export function AuthProvider({ children }) {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
-  const value = useMemo(
-    () => ({
-      user: state.user,
-      loading: state.loading,
-      isAuthenticated: state.isAuthenticated,
-      login,
-      logout,
-      refreshUser,
-      roleDefaultRoute: state.user?.role ? ROLE_DEFAULT_ROUTE[state.user.role] : null
-    }),
-    [state, login, logout, refreshUser]
-  );
+  const value = useMemo(() => ({
+    user: state.user,
+    loading: state.loading,
+    isAuthenticated: state.isAuthenticated,
+    login,
+    logout,
+    refreshUser,
+    roleDefaultRoute: state.user?.role ? ROLE_DEFAULT_ROUTE[state.user.role] : null
+  }), [state, login, logout, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
 }

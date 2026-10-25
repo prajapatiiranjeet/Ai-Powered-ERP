@@ -24,7 +24,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="erp-shell min-h-screen bg-slate-50 text-slate-900 md:pl-64">
+    <div className="erp-shell dashboard-shell min-h-screen">
       <Sidebar
         role="ADMIN"
         roleAccent="admin"
@@ -45,8 +45,8 @@ export default function AdminLayout() {
           onMenuToggle={() => setOpen(true)}
           roleAccent="admin"
         />
-        <main className="flex-1 px-4 py-6 md:px-6 md:py-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="dashboard-main flex-1">
+          <div className="mx-auto w-full max-w-[1440px]">
             <Outlet />
           </div>
         </main>

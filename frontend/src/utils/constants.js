@@ -4,6 +4,13 @@ export const ROLES = Object.freeze({
   FACULTY: 'FACULTY'
 });
 
+export function normalizeRole(value) {
+  if (typeof value !== 'string') return null;
+  const role = value.trim().toUpperCase();
+  if (role === 'STUDENTS') return ROLES.STUDENT;
+  return Object.values(ROLES).includes(role) ? role : null;
+}
+
 export const STORAGE_KEYS = Object.freeze({
   TOKEN: 'erp_token',
   USER_ID: 'erp_userId',
