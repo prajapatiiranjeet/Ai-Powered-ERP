@@ -1,10 +1,13 @@
 package com.chaiorcode.mycode.Controller;
 
+import com.chaiorcode.mycode.DTO.AttendanceSubjectSummaryDTO;
 import com.chaiorcode.mycode.DTO.StudentAttendanceReportDTO;
 import com.chaiorcode.mycode.DTO.StudentDTO;
 import com.chaiorcode.mycode.DTO.StudentProfileDTO;
 import com.chaiorcode.mycode.DTO.StudentPasswordChangeRequest;
 import com.chaiorcode.mycode.Entity.Student;
+import com.chaiorcode.mycode.Repo.CourseSemesterBranchSubjectRepository;
+import com.chaiorcode.mycode.Repo.StudentRepository;
 import com.chaiorcode.mycode.Service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +31,8 @@ public class StudentController {
     private  final AuthService authService;
     private final SherpalService sherpalService;
     private final AttendanceService attendanceService;
+    private final StudentRepository studentRepository;
+    private final CourseSemesterBranchSubjectRepository courseSemesterBranchSubjectRepository;
 
 
 
@@ -36,6 +41,19 @@ public class StudentController {
         String email = authentication.getName();
         StudentProfileDTO profile = studentService.viewprofilebyEmail(email);
         StudentAttendanceReportDTO attendanceReport = attendanceService.getStudentReport(email);
+        if (isSubjectAttendanceQuestion(question)) {
+            return ResponseEntity.ok(formatSubjectAttendance(attendanceReport.getSubjectSummaries()));
+        }
+
+        Long courseId = studentRepository.findCourseIdByEmail(email);
+        Long branchId = studentRepository.findBranchIdByEmail(email);
+        Integer semester = studentRepository.findSemesterIdByEmail(email);
+        String currentSemesterSubjects = courseId == null || branchId == null || semester == null
+                ? "No current-semester subject catalog is available."
+                : courseSemesterBranchSubjectRepository.findStudentSemesterSubjects(courseId, branchId, semester)
+                        .stream()
+                        .map(subject -> "- [%s] %s".formatted(subject.getSubjectCode(), subject.getSubjectName()))
+                        .collect(Collectors.joining("\n"));
 
         DateTimeFormatter readableDateTime = DateTimeFormatter.ofPattern(
                 "dd MMMM yyyy, hh:mm a", Locale.ENGLISH);
@@ -49,6 +67,9 @@ public class StudentController {
             Section: %s
             Current Date and Time: %s
             Overall Attendance: %s%%
+            Current Semester: %s
+            Current Semester Subjects:
+            %s
             Subject-wise Attendance:
             %s
             """.formatted(
@@ -59,6 +80,8 @@ public class StudentController {
                 profile.getSection(),
                 LocalDateTime.now().format(readableDateTime),
                 attendanceReport.getPresentPercentage(),
+                semester == null ? "Not available" : semester,
+                currentSemesterSubjects.isBlank() ? "No subjects are assigned for this semester." : currentSemesterSubjects,
                 attendanceReport.getSubjectSummaries().stream()
                         .map(s -> "  - [%s] %s: Present %d / %d | Absent %d | Leave %d | %.1f%%"
                                 .formatted(
@@ -72,11 +95,41 @@ public class StudentController {
                         .collect(Collectors.joining("\n"))
         );
 
-          return ResponseEntity.ok(sherpalService.ask(question, "STUDENT", userContext));
+          return ResponseEntity.ok(sherpalService.ask(question, "STUDENT", userContext, profile.getFullName()));
     }
 
 
 
+
+    private boolean isSubjectAttendanceQuestion(String question) {
+        String normalized = question == null ? "" : question.toLowerCase(Locale.ROOT);
+        return normalized.matches("(?s).*(?=.*\\battend[a-z]*\\b)(?=.*\\bsubject[a-z]*\\b).*");
+    }
+
+    private String formatSubjectAttendance(List<AttendanceSubjectSummaryDTO> summaries) {
+        if (summaries == null || summaries.isEmpty()) {
+            return SherpalPromptTemplate.FALLBACK_RESPONSE;
+        }
+
+        StringBuilder table = new StringBuilder("### Subject-wise Attendance\n\n")
+                .append("| Subject | Present / Total Classes | Absent | Leave | Attendance |\n")
+                .append("| --- | ---: | ---: | ---: | ---: |\n");
+
+        for (AttendanceSubjectSummaryDTO summary : summaries) {
+            String subject = markdownCell(summary.getSubjectCode()) + " — " + markdownCell(summary.getSubjectName());
+            table.append("| ").append(subject)
+                    .append(" | ").append(summary.getPresentCount()).append(" / ").append(summary.getTotalClassHeld())
+                    .append(" | ").append(summary.getAbsentCount())
+                    .append(" | ").append(summary.getLeave())
+                    .append(" | ").append(String.format(Locale.ROOT, "%.1f%%", summary.getPercentage()))
+                    .append(" |\n");
+        }
+        return table.toString().trim();
+    }
+
+    private String markdownCell(String value) {
+        return value == null ? "—" : value.replace("|", "\\|").replaceAll("[\\r\\n]+", " ").trim();
+    }
 
     @PutMapping("/update")
     public ResponseEntity<Student> updateStudent(@RequestBody StudentDTO studentDTO, Authentication authentication) {

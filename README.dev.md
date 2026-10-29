@@ -72,13 +72,14 @@ spring.ai.model.embedding=ollama
 spring.ai.ollama.base-url=http://localhost:11434
 spring.ai.ollama.chat.options.model=phi4-mini:3.8b
 spring.ai.ollama.chat.options.temperature=0
-spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b
+spring.ai.ollama.embedding.options.model=all-minilm
 
 # PGVector
 spring.ai.vectorstore.pgvector.initialize-schema=true
 spring.ai.vectorstore.pgvector.index-type=hnsw
 spring.ai.vectorstore.pgvector.distance-type=cosine_distance
-spring.ai.vectorstore.pgvector.dimensions=1024
+spring.ai.vectorstore.pgvector.table-name=vector_store_384
+spring.ai.vectorstore.pgvector.dimensions=384
 
 # Multipart file limits
 spring.servlet.multipart.max-file-size=100MB
@@ -91,7 +92,7 @@ spring.jpa.hibernate.ddl-auto=update
 jwt.secret=${JWT_SECRET:}
 ```
 
-Important: spring.ai.vectorstore.pgvector.dimensions must match your embedding model dimension. The repo uses 1024 for qwen3-embedding:0.6b.
+Important: spring.ai.vectorstore.pgvector.dimensions must match your embedding model dimension. The repo uses 384 for all-minilm.
 
 ---
 
@@ -127,7 +128,7 @@ Install Ollama from https://ollama.com/download, then:
 ollama serve
 
 # Pull the models used by this project
-ollama pull qwen3-embedding:0.6b
+ollama pull all-minilm
 ollama pull phi4-mini:3.8b
 
 ollama list
@@ -225,10 +226,10 @@ curl -X POST http://localhost:8080/admin/assign-subject-to-faculty \
 - Vector store integration:
   - Config is in src/main/resources/application.properties (spring.ai.vectorstore.pgvector.*)
   - The schema initialization is controlled by spring.ai.vectorstore.pgvector.initialize-schema=true
-  - If you change embedding model/dimension: drop vector store table and reinitialize (DROP TABLE IF EXISTS vector_store;)
+  - The configured `vector_store_384` table keeps the previous 1024-dimensional `vector_store` data intact; upload source documents again to index them with the 384-dimensional model.
 - Embedding model config:
-  - spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b (default in repo)
-  - dimension used in application.properties is 1024 to match that embedding.
+  - spring.ai.ollama.embedding.options.model=all-minilm (default in repo)
+  - dimension used in application.properties is 384 to match that embedding.
 
 ---
 

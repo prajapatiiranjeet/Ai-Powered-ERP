@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ragService } from '../../services/ragService.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 const roleLabels = { ADMIN: 'Admin', FACULTY: 'Faculty', STUDENT: 'Student' };
 const quickPrompts = [
@@ -37,6 +38,20 @@ function Icon({ name, size = 17 }) {
 
 function SherpalAvatar({ size = 32 }) {
   return <span className="sherpal-mark" style={{ width: size, height: size }} aria-hidden="true">S</span>;
+}
+
+function getTimeGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 17) return 'Good afternoon';
+  if (hour >= 17 && hour < 21) return 'Good evening';
+  return 'Good night';
+}
+
+function getWelcomeMessage(userName) {
+  const firstName = String(userName || '').trim().split(/\s+/)[0];
+  const greeting = getTimeGreeting();
+  return `${greeting}${firstName ? `, ${firstName}` : ''}! How can I help you today?`;
 }
 
 function formatInline(text, keyPrefix = '') {
@@ -158,6 +173,7 @@ function clampToViewport(nextX, nextY, width, height) {
 }
 
 export default function RagChatbot({ role = 'STUDENT' }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -171,7 +187,7 @@ export default function RagChatbot({ role = 'STUDENT' }) {
   const [messages, setMessages] = useState(() => [{
     id: 1,
     from: 'bot',
-    text: `Hello ${roleLabels[role] || 'there'}! I am **SHERPAL AI**, your New Innovation University assistant. How can I help you today?`,
+    text: getWelcomeMessage(user?.name),
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }]);
 
@@ -329,7 +345,7 @@ export default function RagChatbot({ role = 'STUDENT' }) {
   };
 
   const clearChat = () => setMessages([{
-    id: Date.now(), from: 'bot', text: 'Conversation cleared. What can I help you find?',
+    id: Date.now(), from: 'bot', text: getWelcomeMessage(user?.name),
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }]);
 

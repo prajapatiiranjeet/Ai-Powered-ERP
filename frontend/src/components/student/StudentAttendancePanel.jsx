@@ -40,7 +40,7 @@ export default function StudentAttendancePanel() {
   useEffect(() => { loadAttendance(); }, []);
 
   const records = useMemo(() => (report?.records || []).filter((record) => (
-    (subjectFilter === 'ALL' || String(record.offeringId) === subjectFilter)
+    (subjectFilter === 'ALL' || record.subjectCode === subjectFilter)
     && (statusFilter === 'ALL' || record.status === statusFilter)
     && (!dateFilter || record.date === dateFilter)
   )), [report, subjectFilter, statusFilter, dateFilter]);
@@ -82,7 +82,7 @@ export default function StudentAttendancePanel() {
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/70 dark:text-slate-400">
                     <tr><th className="px-3 py-3">Subject Name</th><th className="px-3 py-3">Total Class Held</th><th className="px-3 py-3">Present Count</th><th className="px-3 py-3">Inactive</th><th className="px-3 py-3">Leave</th><th className="px-3 py-3">Absent Count</th><th className="px-3 py-3">Penalty</th><th className="px-3 py-3">Net Present</th><th className="px-3 py-3">Present %</th></tr>
                   </thead>
-                  <tbody>{(report.subjectSummaries || []).map((item) => <tr key={item.offeringId} className="border-t border-slate-100 dark:border-slate-800"><td className="px-3 py-3"><span className="font-semibold text-slate-900 dark:text-white">{item.subjectName}</span><span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{item.subjectCode}</span></td><td className="px-3 py-3">{item.totalClassHeld}</td><td className="px-3 py-3 font-semibold text-emerald-700 dark:text-emerald-400">{item.presentCount}</td><td className="px-3 py-3">{item.inactive}</td><td className="px-3 py-3 text-amber-700 dark:text-amber-400">{item.leave}</td><td className="px-3 py-3 text-rose-700 dark:text-rose-400">{item.absentCount}</td><td className="px-3 py-3">{item.penalty}</td><td className="px-3 py-3 font-semibold">{item.netPresent}</td><td className="px-3 py-3 font-semibold">{Number(item.percentage || 0).toFixed(2)}%</td></tr>)}</tbody>
+                  <tbody>{(report.subjectSummaries || []).map((item) => <tr key={`${item.subjectCode}-${item.subjectName}`} className="border-t border-slate-100 dark:border-slate-800"><td className="px-3 py-3"><span className="font-semibold text-slate-900 dark:text-white">{item.subjectName}</span><span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{item.subjectCode}</span></td><td className="px-3 py-3">{item.totalClassHeld}</td><td className="px-3 py-3 font-semibold text-emerald-700 dark:text-emerald-400">{item.presentCount}</td><td className="px-3 py-3">{item.inactive}</td><td className="px-3 py-3 text-amber-700 dark:text-amber-400">{item.leave}</td><td className="px-3 py-3 text-rose-700 dark:text-rose-400">{item.absentCount}</td><td className="px-3 py-3">{item.penalty}</td><td className="px-3 py-3 font-semibold">{item.netPresent}</td><td className="px-3 py-3 font-semibold">{Number(item.percentage || 0).toFixed(2)}%</td></tr>)}</tbody>
                 </table>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function StudentAttendancePanel() {
                 <div><h4 className="text-base font-semibold text-slate-900 dark:text-white">Date-wise Attendance</h4><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Each row is one class marked by faculty.</p></div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Check date<input aria-label="Filter attendance by date" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-900 dark:text-white" type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} /></label>
-                  <select aria-label="Filter attendance by subject" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white" value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}><option value="ALL">All subjects</option>{(report.subjectSummaries || []).map((item) => <option key={item.offeringId} value={item.offeringId}>{item.subjectCode}</option>)}</select>
+                  <select aria-label="Filter attendance by subject" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white" value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}><option value="ALL">All subjects</option>{(report.subjectSummaries || []).map((item) => <option key={`${item.subjectCode}-${item.subjectName}`} value={item.subjectCode}>{item.subjectCode}</option>)}</select>
                   <select aria-label="Filter attendance by status" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="ALL">All statuses</option><option value="PRESENT">Present</option><option value="ABSENT">Absent</option><option value="LEAVE">Leave</option></select>
                 </div>
               </div>

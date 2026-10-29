@@ -75,17 +75,15 @@ public class FacultyController {
         FacultyProfileDTO profile = facultyService.viewProfile(authentication.getName());
         String userContext = """
             Full Name: %s
-            Employee ID: %s
             Designation: %s
             Department: %s
             Specialization: %s
             Highest Qualification: %s
             Joining Date: %s
-            """.formatted(profile.getFullName(), profile.getEmployeeId(), profile.getDesignation(),
-            profile.getDepartment(), profile.getSpecialization(), profile.getHighestQualification(),
-            profile.getJoiningDate());
+            """.formatted(profile.getFullName(), profile.getDesignation(), profile.getDepartment(),
+            profile.getSpecialization(), profile.getHighestQualification(), profile.getJoiningDate());
 
-        return ResponseEntity.ok(sherpalService.ask(question, "FACULTY", userContext));
+        return ResponseEntity.ok(sherpalService.ask(question, "FACULTY", userContext, profile.getFullName()));
     }
 
     @GetMapping("/view-profile")

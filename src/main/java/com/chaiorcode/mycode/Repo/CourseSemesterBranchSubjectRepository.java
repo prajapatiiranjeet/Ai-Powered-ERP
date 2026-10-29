@@ -28,6 +28,16 @@ public interface CourseSemesterBranchSubjectRepository extends JpaRepository<Cou
     List<SubjectAssignmentOptionDTO> findAssignmentOptions(@Param("courseId") Long courseId,
                                                             @Param("branchId") Long branchId);
 
+    @Query("SELECT new com.chaiorcode.mycode.DTO.SubjectAssignmentOptionDTO(" +
+            "csbs.id, s.code, s.name, c.name, b.name, csbs.semester) " +
+            "FROM CourseSemesterBranchSubject csbs " +
+            "JOIN csbs.subject s JOIN csbs.course c JOIN csbs.branch b " +
+            "WHERE c.id = :courseId AND b.id = :branchId AND csbs.semester = :semester " +
+            "ORDER BY s.code")
+    List<SubjectAssignmentOptionDTO> findStudentSemesterSubjects(@Param("courseId") Long courseId,
+                                                                   @Param("branchId") Long branchId,
+                                                                   @Param("semester") int semester);
+
     @Query("""
                 SELECT csbs.id
                 FROM CourseSemesterBranchSubject csbs

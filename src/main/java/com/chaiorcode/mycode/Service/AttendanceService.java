@@ -102,12 +102,12 @@ public class AttendanceService {
     public List<AttendanceSummaryDTO> getStudentSummary(String studentEmail) {
         Student student = studentRepository.findByUserEmail(studentEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        // Group records by subject offering so each subject gets one summary row.
-        Map<Long, List<Attendance>> byOffering = attendanceRepository.findByStudentIdWithOffering(student.getId())
+        // Merge offerings of the same course/branch/semester subject into one subject summary.
+        Map<Long, List<Attendance>> bySubject = attendanceRepository.findByStudentIdWithOffering(student.getId())
                 .stream()
-                .collect(Collectors.groupingBy(a -> a.getSubjectOffering().getId()));
+                .collect(Collectors.groupingBy(a -> a.getSubjectOffering().getCsbs().getId()));
 
-        return byOffering.values().stream()
+        return bySubject.values().stream()
                 .map(this::toSummary)
                 .sorted((left, right) -> left.getSubjectCode().compareToIgnoreCase(right.getSubjectCode()))
                 .toList();
@@ -125,9 +125,9 @@ public class AttendanceService {
             long total = records.size();
             double percentage = total == 0 ? 0 : Math.round((present * 10000.0) / total) / 100.0;
 
-            Map<Long, List<Attendance>> byOffering = records.stream()
-                .collect(Collectors.groupingBy(record -> record.getSubjectOffering().getId()));
-            List<AttendanceSubjectSummaryDTO> subjectSummaries = byOffering.values().stream()
+            Map<Long, List<Attendance>> bySubject = records.stream()
+                .collect(Collectors.groupingBy(record -> record.getSubjectOffering().getCsbs().getId()));
+            List<AttendanceSubjectSummaryDTO> subjectSummaries = bySubject.values().stream()
                 .map(this::toSubjectSummary)
                 .sorted((left, right) -> left.getSubjectCode().compareToIgnoreCase(right.getSubjectCode()))
                 .toList();

@@ -52,7 +52,7 @@ Work in progress. Auth, dashboards, admin CRUD, attendance, document indexing, a
 
 **Frontend:** React 18.3, Vite 5.3 (dev proxy to `:8080`), Tailwind 3.4 (`darkMode: class`), React Router 6.26, Context JWT (`erp_token` in localStorage). Logo: `frontend/public/Mainlogoerp.png`.
 
-**AI:** Ollama `qwen3-embedding:0.6b` (1024-dim) + `phi4-mini:3.8b`. Embed + chat via backend only.
+**AI:** Ollama `all-minilm` (384-dim) + `phi4-mini:3.8b`. Embed + chat via backend only.
 
 ---
 
@@ -91,13 +91,14 @@ spring.datasource.password=${DB_PASSWORD:}
 spring.jpa.hibernate.ddl-auto=update
 jwt.secret=${JWT_SECRET:}
 spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.embedding.options.model=qwen3-embedding:0.6b
+spring.ai.ollama.embedding.options.model=all-minilm
 spring.ai.ollama.chat.options.model=phi4-mini:3.8b
 spring.ai.vectorstore.pgvector.initialize-schema=true
-spring.ai.vectorstore.pgvector.dimensions=1024
+spring.ai.vectorstore.pgvector.table-name=vector_store_384
+spring.ai.vectorstore.pgvector.dimensions=384
 ```
 
-`dimensions` must match the embedding model. After a model/dim change: `DROP TABLE IF EXISTS vector_store;` then restart.
+`dimensions` must match the embedding model. The `vector_store_384` table keeps the previous 1024-dimensional `vector_store` data intact; upload source documents again to index them with the 384-dimensional model.
 
 **First admin:** `/admin/register-admin` needs an ADMIN JWT. Insert one `users` row (`role = 'ADMIN'`, BCrypt password) after Hibernate creates tables, then log in.
 
@@ -105,7 +106,7 @@ spring.ai.vectorstore.pgvector.dimensions=1024
 
 ```powershell
 ollama serve
-ollama pull qwen3-embedding:0.6b
+ollama pull all-minilm
 ollama pull phi4-mini:3.8b
 ollama list
 ```
